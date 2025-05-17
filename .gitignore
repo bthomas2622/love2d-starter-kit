@@ -1,0 +1,24 @@
+# Love2D specific
+*.love
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE specific
+.vscode/
+.idea/
+
+# Save directory (if you have one and don't want to track saves)
+# For example, if your game saves to a folder named "saves" in the root:
+# saves/
+
+# User-specific files (e.g., local settings not for the repo)
+*.user
+*.suo
+
+# Build artifacts or temporary files
+dist/
+build/
+*.o
+*.obj
