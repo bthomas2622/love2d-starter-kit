@@ -6,8 +6,8 @@ gameState.settings = {
     musicVolume = 0.7,
     effectsVolume = 0.8,
     screenSize = {
-        width = 800,
-        height = 600
+        width = 1280,
+        height = 720
     },
     language = "en"  -- Default language: English
 }
@@ -180,6 +180,26 @@ gameState.screenSizes = {
     {width = 1920, height = 1080, label = "1920x1080 (1080p)"}
 }
 
+-- Get a formatted list of available languages for UI
+function gameState.getAvailableLanguages()
+    local languagesList = {
+        { code = "en", name = "English" },
+        { code = "zh", name = "中文 (Chinese)" },
+        { code = "hi", name = "हिन्दी (Hindi)" },
+        { code = "es", name = "Español (Spanish)" },
+        { code = "fr", name = "Français (French)" },
+        { code = "ar", name = "العربية (Arabic)" },
+        { code = "bn", name = "বাংলা (Bengali)" },
+        { code = "pt", name = "Português (Portuguese)" },
+        { code = "ru", name = "Русский (Russian)" },
+        { code = "ja", name = "日本語 (Japanese)" },
+        { code = "ko", name = "한국어 (Korean)" },
+        { code = "de", name = "Deutsch (German)" },
+        { code = "pl", name = "Polski (Polish)" }
+    }
+    return languagesList
+end
+
 -- Return the text in the current language
 function gameState.getText(key)
     local lang = gameState.settings.language
@@ -278,6 +298,14 @@ function gameState.applySettings()
         gameState.settings.screenSize.height, 
         {resizable = true}
     )
+    
+    -- Update the screen transform to ensure scaling works properly
+    if love.graphics then
+        -- Manually trigger the same behavior as in the resize callback
+        if love.updateScreenTransform then
+            love.updateScreenTransform(love.graphics.getWidth(), love.graphics.getHeight())
+        end
+    end
     
     -- Save settings
     gameState.save()

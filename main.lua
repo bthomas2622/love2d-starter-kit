@@ -1,52 +1,127 @@
 -- Main entry point for our Love2D game
 local gameState = require "src.states.gameState"
-local fontManager = require "src.fontManager"
+local fontManager = require "src.utils.fontManager"
 
 -- Variables to store the current state
 local currentState = nil
 local states = {}
 
+-- Screen and scaling variables
+local targetAspectRatio = 16 / 9
+local baseWidth = 1280 -- This is our fixed virtual width for the 16:9 canvas (720p)
+local baseHeight = baseWidth / targetAspectRatio -- This is our fixed virtual height (720)
+
+local scale = 1
+local offsetX = 0
+local offsetY = 0
+
+-- Function to update scaling and offset based on window size
+function love.updateScreenTransform(w, h)
+    local windowAspectRatio = w / h
+
+    if windowAspectRatio > targetAspectRatio then
+        -- Window is wider than target (e.g., 16:9 content on a 21:9 screen)
+        -- Fit to height, letterbox horizontally
+        scale = h / baseHeight
+        offsetX = (w - (baseWidth * scale)) / 2
+        offsetY = 0
+    else
+        -- Window is taller or equal to target (e.g., 16:9 content on a 4:3 screen)
+        -- Fit to width, letterbox vertically
+        scale = w / baseWidth
+        offsetX = 0
+        offsetY = (h - (baseHeight * scale)) / 2
+    end
+    
+    -- Make sure the screen transform is accessible globally via this function
+    -- This ensures all states get the same consistent transform values
+    love.getScreenTransform = function()
+        return scale, offsetX, offsetY, baseWidth, baseHeight
+    end
+end
+
+-- Local alias for updateScreenTransform for internal use
+local updateScreenTransform = love.updateScreenTransform
+
+
 function love.load()
-    -- Set default settings
     love.window.setTitle("My Love2D Game")
-    love.window.setMode(800, 600, {resizable=true})
     
-    -- Initialize the font manager
+    -- Initialize with the user's stored settings if available
+    gameState.load()
+    
+    -- Set the window mode using the loaded settings
+    love.window.setMode(
+        gameState.settings.screenSize.width, 
+        gameState.settings.screenSize.height, 
+        {resizable=true, minwidth=400, minheight=300}
+    )
+
     fontManager.init()
-    
-    -- Load the game states
+
     states.menu = require "src.states.menuState"
     states.play = require "src.states.playState"
     states.settings = require "src.states.settingsState"
+
+    -- Update transform before switching state so the initial layout is correct
+    updateScreenTransform(love.graphics.getWidth(), love.graphics.getHeight())
     
-    -- Set the initial state to menu
     switchState("menu")
-    
-    -- Load game settings
-    gameState.load()
+end
+
+function love.resize(w, h)
+    updateScreenTransform(w, h)
+    if currentState and currentState.resize then
+        -- Make sure we're using the updated transform values
+        local s, ox, oy, bw, bh = love.getScreenTransform()
+        -- Pass the virtual width/height and the actual scale, offsetX, offsetY
+        currentState.resize(bw, bh, s, ox, oy)
+    end
 end
 
 function love.update(dt)
     if currentState and currentState.update then
-        currentState.update(dt)
+        -- Pass dt and the current scale. States will use the scale for their internal logic if needed.
+        currentState.update(dt, scale)
     end
 end
 
 function love.draw()
+    -- Clear the entire window with black for letterboxing/pillarboxing
+    love.graphics.clear(0, 0, 0, 1)
+
+    love.graphics.push()
+    -- Translate and scale to draw the game content within the letterboxed area
+    love.graphics.translate(offsetX, offsetY)
+    love.graphics.scale(scale, scale)
+
+    -- Now all drawing operations are relative to the baseWidth x baseHeight virtual canvas
     if currentState and currentState.draw then
         currentState.draw()
     end
+
+    love.graphics.pop()
+end
+
+-- Helper function to transform mouse coordinates from screen to virtual canvas space
+local function transformMousePosition(screenX, screenY)
+    if scale == 0 then return screenX, screenY end -- Avoid division by zero if scale is not ready
+    local virtualX = (screenX - offsetX) / scale
+    local virtualY = (screenY - offsetY) / scale
+    return virtualX, virtualY
 end
 
 function love.mousepressed(x, y, button)
+    local virtualX, virtualY = transformMousePosition(x, y)
     if currentState and currentState.mousepressed then
-        currentState.mousepressed(x, y, button)
+        currentState.mousepressed(virtualX, virtualY, button)
     end
 end
 
 function love.mousereleased(x, y, button)
+    local virtualX, virtualY = transformMousePosition(x, y)
     if currentState and currentState.mousereleased then
-        currentState.mousereleased(x, y, button)
+        currentState.mousereleased(virtualX, virtualY, button)
     end
 end
 
@@ -54,41 +129,42 @@ function love.keypressed(key)
     if currentState and currentState.keypressed then
         currentState.keypressed(key)
     end
-    
-    -- Escape key to quit
+
     if key == "escape" then
         love.event.quit()
     end
 end
 
-function love.wheelmoved(x, y)
+function love.wheelmoved(x_delta, y_delta) -- x_delta, y_delta are scroll amounts
     if currentState and currentState.wheelmoved then
-        currentState.wheelmoved(x, y)
+        -- Get the current mouse position and pass it to the wheelmoved handler
+        local mx, my = love.mouse.getPosition()
+        currentState.wheelmoved(x_delta, y_delta, mx, my)
     end
 end
 
--- Keep track of the current state name
 local currentStateName = "menu"
 
--- Function to switch between game states
 function switchState(stateName)
     if states[stateName] then
         currentState = states[stateName]
-        -- Store the current state name
         currentStateName = stateName
         if currentState.init then
-            currentState.init()
+            -- Initialize state with virtual dimensions and current transform
+            currentState.init(baseWidth, baseHeight, scale, offsetX, offsetY)
         end
     else
         error("No state with name: " .. stateName)
     end
 end
 
--- Function to get the current state name
 function getCurrentStateName()
     return currentStateName
 end
 
--- Make the functions globally accessible
 love.switchState = switchState
 love.getCurrentStateName = getCurrentStateName
+
+-- Note: love.getScreenTransform is already defined in updateScreenTransform
+-- This ensures consistent values throughout the application
+-- The function returns: scale, offsetX, offsetY, baseWidth, baseHeight

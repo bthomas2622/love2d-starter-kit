@@ -35,8 +35,13 @@ This guide provides best practices for AI coding agents working with this Love2D
 *   **Game States**: The project uses a state-based architecture, with states located in `src/states/` (e.g., `menuState.lua`, `playState.lua`).
     *   When adding or modifying game states, follow the existing pattern (e.g., each state might have `load`, `update`, `draw`, `keypressed` methods).
     *   State transitions are a key part of the game flow.
-*   **Modules**: Custom modules are used to organize code (e.g., `src/fontManager.lua`).
-    *   Load modules using `require("path.to.module")`. For example, `local fontManager = require("src.fontManager")`. The path uses dots as separators and does not include the `.lua` extension.
+*   **Modules**: Custom modules are used to organize code across various directories:
+    *   `src/utils/`: Utility functions (e.g., `src/utils/fontManager.lua`)
+    *   `src/ui/`: UI components (e.g., `src/ui/button.lua`)
+    *   `src/entities/`: Game entities and objects
+    *   `src/systems/`: Game systems (physics, audio, etc.)
+    *   `src/constants/`: Game constants and configuration
+    *   Load modules using `require("path.to.module")`. For example, `local fontManager = require("src.utils.fontManager")`. The path uses dots as separators and does not include the `.lua` extension.
 *   **Assets**: All game assets (fonts, sounds, images) are stored in the `assets/` directory.
     *   Use relative paths from the project root when accessing assets, e.g., `"assets/fonts/NotoSans-Regular.ttf"` or `"assets/sounds/MenuMusic.ogg"`.
 
@@ -47,12 +52,12 @@ This guide provides best practices for AI coding agents working with this Love2D
 
 ## 6. UI Components
 
-*   The project includes UI components like buttons (`src/states/button.lua`), dropdowns (`src/states/dropdown.lua`), and sliders (`src/states/slider.lua`).
+*   The project includes UI components like buttons (`src/ui/button.lua`), dropdowns (`src/ui/dropdown.lua`), and sliders (`src/ui/slider.lua`).
 *   When implementing UI elements, try to reuse or extend these existing components if applicable.
 
 ## 7. Specific Files to Note
 
-*   **`updateGameSettings.lua`**: This script appears to be a utility related to managing game settings. Understand its purpose if tasks involve modifying how game settings are handled.
+*   **`src/utils/updateGameSettings.lua`**: This script appears to be a utility related to managing game settings. Understand its purpose if tasks involve modifying how game settings are handled.
 
 ## 8. Prompting the AI Agent
 
