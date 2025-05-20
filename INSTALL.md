@@ -33,7 +33,6 @@
 ## Controls
 
 - Use the mouse to navigate menus and interact with buttons, sliders, and dropdowns
-- In the game, press ESC to quit
 
 ## Troubleshooting
 

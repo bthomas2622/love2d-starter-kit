@@ -1,4 +1,5 @@
 -- Font manager to handle loading and managing fonts
+local love = require("love")
 local fontManager = {}
 
 -- Font cache
@@ -20,12 +21,15 @@ local fallbackFonts = {}
 
 -- Initialize the font manager
 function fontManager.init()
+    -- Ensure fallbackFonts is initialized
+    fallbackFonts = {}
+    
     -- Load fallback fonts
     for _, path in ipairs(fallbackFontPaths) do
         local success, font = pcall(function()
             return love.graphics.newFont(path, 16) -- Load with a default size, actual size will be set later
         end)
-        if success then
+        if success and font then
             table.insert(fallbackFonts, font)
         else
             print("Warning: Failed to load fallback font: " .. path)
@@ -47,25 +51,27 @@ function fontManager.getFont(size)
     if fonts[size] then
         return fonts[size]
     end
-    
-    -- Load the font
+      -- Load the font
     local success, font = pcall(function()
         local newFont = love.graphics.newFont(defaultFontPath, size)
-        if newFont and #fallbackFonts > 0 then
-            newFont:setFallbacks(unpack(fallbackFonts))
+        if newFont and fallbackFonts and #fallbackFonts > 0 then
+            -- Use unpack or table.unpack depending on Lua version
+            local unpacker = table.unpack or unpack
+            newFont:setFallbacks(unpacker(fallbackFonts))
         end
         return newFont
     end)
     
     if success and font then -- Added 'and font' to ensure font is not nil
         fonts[size] = font
-        return font
-    else
+        return font    else
         -- Fallback to default Love font if loading fails
         print("Warning: Failed to load Unicode font, falling back to default")
         local defaultLoveFont = love.graphics.newFont(size) -- Create a new default Love font
-        if defaultLoveFont and #fallbackFonts > 0 then -- Apply fallbacks to the default Love font too
-            defaultLoveFont:setFallbacks(unpack(fallbackFonts))
+        if defaultLoveFont and fallbackFonts and #fallbackFonts > 0 then -- Apply fallbacks to the default Love font too
+            -- Use unpack or table.unpack depending on Lua version
+            local unpacker = table.unpack or unpack
+            defaultLoveFont:setFallbacks(unpacker(fallbackFonts))
         end
         fonts[size] = defaultLoveFont
         return fonts[size]

@@ -1,5 +1,7 @@
 -- Dropdown menu class for settings
+local love = require("love")
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
@@ -31,11 +33,12 @@ function Dropdown.new(x, y, width, height, options, selectedIndex, label, onChan
 
     -- Colors
     self.backgroundColor = {0.4, 0.4, 0.5, 1}
-    self.hoverColor = {0.5, 0.5, 0.6, 1}
-    self.textColor = {1, 1, 1, 1}    self.hoveredOption = nil
+    self.hoverColor = {0.5, 0.5, 0.6, 1}    self.textColor = {1, 1, 1, 1}
+    self.hoveredOption = nil
     -- Use fixed font sizes for the virtual canvas - scaling is handled by Love's transform
     self.font = fontManager.getFont(16) -- Standard font size
     self.labelFont = fontManager.getFont(14) -- Slightly smaller for label
+    self.lastHoveredOption = nil -- Track to play sound on hover change
 
     return self
 end
@@ -51,6 +54,7 @@ end
 function Dropdown:mousepressed(x, y) -- x, y are transformed
     if x >= self.x and x <= self.x + self.width and
        y >= self.y and y <= self.y + self.height then
+        soundManager.playSound("menuSelect")
         self.open = not self.open
         if self.open then
             self.scrollOffset = 0
@@ -72,14 +76,14 @@ function Dropdown:mousepressed(x, y) -- x, y are transformed
             local relativeIndex = i - startIndex
             local optionY
             if self.direction == "up" then
-                optionY = self.y - (visibleCount - relativeIndex) * optionDrawHeight
-            else
+                optionY = self.y - (visibleCount - relativeIndex) * optionDrawHeight            else
                 optionY = self.y + self.height + relativeIndex * optionDrawHeight
             end
-
+            
             if x >= self.x and x <= self.x + self.width and
                y >= optionY and y <= optionY + optionDrawHeight then
                 if i ~= self.selectedIndex then
+                    soundManager.playSound("menuSelect")
                     self.selectedIndex = i
                     if self.onChange then
                         self.onChange(self.selectedIndex, self.options[i])
@@ -121,8 +125,7 @@ function Dropdown:update(dt, scale) -- Receive current overall scale
     local mx, my = love.mouse.getPosition() -- Raw screen coordinates
     local s, ox, oy, baseW, baseH = love.getScreenTransform()
     local tmx = (mx - ox) / s
-    local tmy = (my - oy) / s
-
+    local tmy = (my - oy) / s    local oldHoveredOption = self.hoveredOption
     self.hoveredOption = nil
     if self.open then
         local visibleCount = math.min(#self.options, self.maxVisibleOptions)
@@ -141,6 +144,9 @@ function Dropdown:update(dt, scale) -- Receive current overall scale
             if tmx >= self.x and tmx <= self.x + self.width and
                tmy >= optionY and tmy <= optionY + optionDrawHeight then
                 self.hoveredOption = i
+                if oldHoveredOption ~= self.hoveredOption then
+                    soundManager.playSound("menuMove")
+                end
                 break
             end
         end

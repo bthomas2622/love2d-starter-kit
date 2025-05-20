@@ -1,4 +1,5 @@
 -- Game state management
+local love = require("love")
 local gameState = {}
 
 -- Default settings
@@ -240,6 +241,11 @@ function gameState.save()
     else
         print("Error: Failed to encode settings to JSON: " .. jsonData)
     end
+end
+
+-- Alias for save to make code more intuitive
+function gameState.saveSettings()
+    gameState.save()
 end
 
 -- Load settings from a file

@@ -1,7 +1,9 @@
 -- Main Menu State
+local love = require("love")
 local Button = require "src.ui.button"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 local menuState = {}
 
@@ -79,6 +81,7 @@ end
 -- init receives: virtualWidth, virtualHeight, guiScale, guiOffsetX, guiOffsetY
 function menuState.init(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
+    soundManager.playMusic("menu") -- Start playing menu music when entering the menu state
 end
 
 -- resize receives: virtualWidth, virtualHeight, guiScale, guiOffsetX, guiOffsetY
@@ -100,12 +103,10 @@ end
 
 function menuState.draw()
     -- All drawing is now on the virtual canvas (e.g., 800x450)
-    -- main.lua handles scaling this virtual canvas to the screen.
-
-    -- Draw the game title
+    -- main.lua handles scaling this virtual canvas to the screen.    -- Draw the game title
     love.graphics.setFont(titleFont) -- titleFont is already sized for the virtual canvas
     local title = "Love2D Game"
-    local titleWidth = titleFont:getWidth(title) -- Width on the virtual canvas
+    local titleWidth = titleFont and titleFont:getWidth(title) or 0 -- Width on the virtual canvas
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(

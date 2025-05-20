@@ -1,5 +1,7 @@
 -- Slider class for settings menu
+local love = require("love")
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 local Slider = {}
 Slider.__index = Slider
@@ -13,11 +15,11 @@ function Slider.new(x, y, width, height, min, max, value, label, onChange, guiSc
     self.height = height  -- Height on the virtual canvas
     self.min = min or 0
     self.max = max or 1
-    self.value = value or self.min
-    self.label = label or ""
+    self.value = value or self.min    self.label = label or ""
     self.onChange = onChange
     self.dragging = false
     self.guiScale = guiScale or 1
+    self.lastValue = value -- To track value changes for sound effects
 
     -- Colors
     self.barColor = {0.4, 0.4, 0.5, 1}
@@ -45,6 +47,7 @@ function Slider:setFromPosition(pos)
         if self.onChange then
             self.onChange(self.value)
         end
+        soundManager.playSound("menuMove")
     end
 end
 
@@ -63,6 +66,8 @@ end
 
 -- Handle mouse release
 function Slider:mousereleased(x, y)
+    if self.dragging then
+    end
     self.dragging = false
 end
 

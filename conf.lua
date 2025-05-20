@@ -1,3 +1,5 @@
+local love = require("love")
+
 function love.conf(t)
     t.title = "Love2D Game"            -- The title of the window the game is in
     t.version = "11.4"                 -- The LÖVE version this game was made for

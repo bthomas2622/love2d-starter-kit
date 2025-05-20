@@ -1,9 +1,11 @@
 -- Settings Menu State
+local love = require("love")
 local Button = require "src.ui.button"
 local Slider = require "src.ui.slider"
 local Dropdown = require "src.ui.dropdown"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 local settingsState = {}
 
@@ -66,11 +68,11 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         startY,
         controlWidth,
         10, -- Visual height of slider track
-        0, 1,
-        tempSettings.musicVolume,
+        0, 1,        tempSettings.musicVolume,
         gameState.getText("musicVolume"),
         function(value)
             tempSettings.musicVolume = value
+            soundManager.updateVolumes() -- Apply volume change immediately
         end,
         currentGuiScale
     ))
@@ -81,11 +83,11 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         startY + spacing,
         controlWidth,
         10,
-        0, 1,
-        tempSettings.effectsVolume,
+        0, 1,        tempSettings.effectsVolume,
         gameState.getText("effectsVolume"),
         function(value)
             tempSettings.effectsVolume = value
+            soundManager.updateVolumes() -- Apply volume change immediately
         end,
         currentGuiScale
     ))
@@ -167,10 +169,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         virtualHeight - buttonHeight - 20,
         buttonWidth,
         buttonHeight,
-        gameState.getText("apply"),
-        function()
+        gameState.getText("apply"),        function()
             gameState.settings = deepcopy(tempSettings)
             gameState.applySettings()
+            soundManager.updateVolumes() -- Update volumes with final settings
             love.switchState("menu")
         end,
         currentGuiScale
@@ -207,7 +209,7 @@ function settingsState.draw()
     love.graphics.setFont(titleFont)
     love.graphics.setColor(1, 1, 1, 1)
     local settingsText = gameState.getText("settings")
-    local titleW = titleFont:getWidth(settingsText)
+    local titleW = titleFont and titleFont:getWidth(settingsText) or 0
     love.graphics.print(settingsText, virtualWidth / 2 - titleW / 2, virtualHeight * 0.06)
 
     -- Draw UI components

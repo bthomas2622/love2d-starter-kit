@@ -1,6 +1,8 @@
 -- Main entry point for our Love2D game
+local love = require("love")
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 -- Variables to store the current state
 local currentState = nil
@@ -54,10 +56,10 @@ function love.load()
     love.window.setMode(
         gameState.settings.screenSize.width, 
         gameState.settings.screenSize.height, 
-        {resizable=true, minwidth=400, minheight=300}
-    )
+        {resizable=true, minwidth=400, minheight=300}    )
 
     fontManager.init()
+    soundManager.load()
 
     states.menu = require "src.states.menuState"
     states.play = require "src.states.playState"
@@ -129,10 +131,6 @@ function love.keypressed(key)
     if currentState and currentState.keypressed then
         currentState.keypressed(key)
     end
-
-    if key == "escape" then
-        love.event.quit()
-    end
 end
 
 function love.wheelmoved(x_delta, y_delta) -- x_delta, y_delta are scroll amounts
@@ -146,7 +144,23 @@ end
 local currentStateName = "menu"
 
 function switchState(stateName)
+    local oldStateName = currentStateName
+    
     if states[stateName] then
+        -- Handle music transitions
+        if (stateName == "menu" or stateName == "settings") and (oldStateName ~= "menu" and oldStateName ~= "settings") then
+            -- Switching to a menu state from a non-menu state, play menu music
+            soundManager.playMusic("menu")
+        elseif stateName == "play" and (oldStateName == "menu" or oldStateName == "settings") then
+            -- Switching from menu to gameplay, stop menu music
+            soundManager.stopMusic()
+        end
+
+        -- If we're going back to the menu from settings, play the back sound
+        if stateName == "menu" and oldStateName == "settings" then
+            soundManager.playSound("menuBack")
+        end
+        
         currentState = states[stateName]
         currentStateName = stateName
         if currentState.init then

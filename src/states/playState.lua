@@ -1,7 +1,9 @@
 -- Play State
+local love = require("love")
 local Button = require "src.ui.button"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
+local soundManager = require "src.utils.soundManager"
 
 local playState = {}
 
@@ -36,9 +38,9 @@ local function recalculateLayout(w, h, scale, offsetX, offsetY)
         20, -- Position on the virtual canvas
         20, -- Position on the virtual canvas
         buttonWidth,
-        buttonHeight,
-        gameState.getText("back"),
+        buttonHeight,        gameState.getText("back"),
         function()
+            soundManager.playSound("menuBack")
             love.switchState("menu")
         end,
         currentScale -- Pass scale to button for detail scaling
@@ -71,7 +73,7 @@ function playState.draw()
     love.graphics.setFont(messageFont)
     love.graphics.setColor(1, 1, 1, 1)
     local message = "This is where your game would go!"
-    local messageWidth = messageFont:getWidth(message)
+    local messageWidth = messageFont and messageFont:getWidth(message) or 0
     
     -- Always center based on the virtual canvas dimensions
     local _, _, _, vWidth, vHeight = love.getScreenTransform()
