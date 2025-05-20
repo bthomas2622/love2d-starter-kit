@@ -25,9 +25,17 @@ gameState.languages = {
         screenSize = "Screen Size",
         language = "Language",
         back = "Back",
-        apply = "Apply"
-    },
-    -- Mandarin Chinese (1.1+ billion speakers)
+        apply = "Apply",
+        controls = "Controls",
+        keyboard = "Keyboard",
+        gamepad = "Gamepad",
+        up = "Up",
+        down = "Down",
+        left = "Left",
+        right = "Right",
+        select = "Select",
+        reset = "Reset to Default"
+    },    -- Mandarin Chinese (1.1+ billion speakers)
     ["zh"] = {
         play = "开始",
         settings = "设置",
@@ -37,9 +45,17 @@ gameState.languages = {
         screenSize = "屏幕尺寸",
         language = "语言",
         back = "返回",
-        apply = "应用"
-    },
-    -- Hindi (600+ million speakers)
+        apply = "应用",
+        controls = "控制",
+        keyboard = "键盘",
+        gamepad = "游戏手柄",
+        up = "上",
+        down = "下",
+        left = "左",
+        right = "右",
+        select = "选择",
+        reset = "恢复默认设置"
+    },-- Hindi (600+ million speakers)
     ["hi"] = {
         play = "खेलें",
         settings = "सेटिंग्स",
@@ -49,9 +65,17 @@ gameState.languages = {
         screenSize = "स्क्रीन का आकार",
         language = "भाषा",
         back = "वापस",
-        apply = "लागू करें"
-    },
-    -- Spanish (550+ million speakers)
+        apply = "लागू करें",
+        controls = "नियंत्रण",
+        keyboard = "कीबोर्ड",
+        gamepad = "गेमपैड",
+        up = "ऊपर",
+        down = "नीचे",
+        left = "बाएं",
+        right = "दाएं",
+        select = "चुनें",
+        reset = "डिफ़ॉल्ट पर रीसेट"
+    },    -- Spanish (550+ million speakers)
     ["es"] = {
         play = "Jugar",
         settings = "Configuración",
@@ -61,9 +85,17 @@ gameState.languages = {
         screenSize = "Tamaño de pantalla",
         language = "Idioma",
         back = "Atrás",
-        apply = "Aplicar"
-    },
-    -- French (280+ million speakers)
+        apply = "Aplicar",
+        controls = "Controles",
+        keyboard = "Teclado",
+        gamepad = "Mando",
+        up = "Arriba",
+        down = "Abajo",
+        left = "Izquierda",
+        right = "Derecha",
+        select = "Seleccionar",
+        reset = "Restablecer"
+    },    -- French (280+ million speakers)
     ["fr"] = {
         play = "Jouer",
         settings = "Paramètres",
@@ -73,9 +105,17 @@ gameState.languages = {
         screenSize = "Taille de l'écran",
         language = "Langue",
         back = "Retour",
-        apply = "Appliquer"
-    },
-    -- Arabic (270+ million speakers)
+        apply = "Appliquer",
+        controls = "Commandes",
+        keyboard = "Clavier",
+        gamepad = "Manette",
+        up = "Haut",
+        down = "Bas",
+        left = "Gauche",
+        right = "Droite",
+        select = "Sélectionner",
+        reset = "Réinitialiser"
+    },    -- Arabic (270+ million speakers)
     ["ar"] = {
         play = "لعب",
         settings = "إعدادات",
@@ -85,9 +125,17 @@ gameState.languages = {
         screenSize = "حجم الشاشة",
         language = "اللغة",
         back = "رجوع",
-        apply = "تطبيق"
-    },
-    -- Bengali (260+ million speakers)
+        apply = "تطبيق",
+        controls = "التحكم",
+        keyboard = "لوحة المفاتيح",
+        gamepad = "يد التحكم",
+        up = "أعلى",
+        down = "أسفل",
+        left = "يسار",
+        right = "يمين",
+        select = "اختيار",
+        reset = "إعادة تعيين"
+    },    -- Bengali (260+ million speakers)
     ["bn"] = {
         play = "খেলুন",
         settings = "সেটিংস",
@@ -97,9 +145,17 @@ gameState.languages = {
         screenSize = "স্ক্রিনের আকার",
         language = "ভাষা",
         back = "পেছনে",
-        apply = "প্রয়োগ করুন"
-    },
-    -- Portuguese (260+ million speakers)
+        apply = "প্রয়োগ করুন",
+        controls = "নিয়ন্ত্রণ",
+        keyboard = "কীবোর্ড",
+        gamepad = "গেমপ্যাড",
+        up = "উপরে",
+        down = "নিচে",
+        left = "বামে",
+        right = "ডানে",
+        select = "নির্বাচন করুন",
+        reset = "পুনরায় সেট করুন"
+    },    -- Portuguese (260+ million speakers)
     ["pt"] = {
         play = "Jogar",
         settings = "Configurações",
@@ -109,9 +165,17 @@ gameState.languages = {
         screenSize = "Tamanho da tela",
         language = "Idioma",
         back = "Voltar",
-        apply = "Aplicar"
-    },
-    -- Russian (250+ million speakers)
+        apply = "Aplicar",
+        controls = "Controles",
+        keyboard = "Teclado",
+        gamepad = "Controle",
+        up = "Cima",
+        down = "Baixo",
+        left = "Esquerda",
+        right = "Direita",
+        select = "Selecionar",
+        reset = "Restaurar padrão"
+    },    -- Russian (250+ million speakers)
     ["ru"] = {
         play = "Играть",
         settings = "Настройки",
@@ -121,9 +185,17 @@ gameState.languages = {
         screenSize = "Размер экрана",
         language = "Язык",
         back = "Назад",
-        apply = "Применить"
-    },
-    -- Japanese (130+ million speakers)
+        apply = "Применить",
+        controls = "Управление",
+        keyboard = "Клавиатура",
+        gamepad = "Геймпад",
+        up = "Вверх",
+        down = "Вниз",
+        left = "Влево",
+        right = "Вправо",
+        select = "Выбрать",
+        reset = "Сбросить"
+    },    -- Japanese (130+ million speakers)
     ["ja"] = {
         play = "プレイ",
         settings = "設定",
@@ -133,9 +205,17 @@ gameState.languages = {
         screenSize = "画面サイズ",
         language = "言語",
         back = "戻る",
-        apply = "適用"
-    },
-    -- Korean (80+ million speakers)
+        apply = "適用",
+        controls = "操作",
+        keyboard = "キーボード",
+        gamepad = "ゲームパッド",
+        up = "上",
+        down = "下",
+        left = "左",
+        right = "右",
+        select = "決定",
+        reset = "リセット"
+    },    -- Korean (80+ million speakers)
     ["ko"] = {
         play = "플레이",
         settings = "설정",
@@ -145,9 +225,17 @@ gameState.languages = {
         screenSize = "화면 크기",
         language = "언어",
         back = "뒤로",
-        apply = "적용"
-    },
-    -- German (90+ million speakers)
+        apply = "적용",
+        controls = "조작",
+        keyboard = "키보드",
+        gamepad = "게임패드",
+        up = "위",
+        down = "아래",
+        left = "왼쪽",
+        right = "오른쪽",
+        select = "선택",
+        reset = "초기화"
+    },    -- German (90+ million speakers)
     ["de"] = {
         play = "Spielen",
         settings = "Einstellungen",
@@ -157,9 +245,17 @@ gameState.languages = {
         screenSize = "Bildschirmgröße",
         language = "Sprache",
         back = "Zurück",
-        apply = "Anwenden"
-    },
-    -- Polish (40+ million speakers)
+        apply = "Anwenden",
+        controls = "Steuerung",
+        keyboard = "Tastatur",
+        gamepad = "Gamepad",
+        up = "Hoch",
+        down = "Runter",
+        left = "Links",
+        right = "Rechts",
+        select = "Auswählen",
+        reset = "Zurücksetzen"
+    },    -- Polish (40+ million speakers)
     ["pl"] = {
         play = "Graj",
         settings = "Ustawienia",
@@ -169,7 +265,16 @@ gameState.languages = {
         screenSize = "Rozmiar ekranu",
         language = "Język",
         back = "Wstecz",
-        apply = "Zastosuj"
+        apply = "Zastosuj",
+        controls = "Sterowanie",
+        keyboard = "Klawiatura",
+        gamepad = "Kontroler",
+        up = "Góra",
+        down = "Dół",
+        left = "Lewo",
+        right = "Prawo",
+        select = "Wybierz",
+        reset = "Resetuj"
     }
 }
 
@@ -226,21 +331,56 @@ function gameState.isRTL()
     return lang == "ar"
 end
 
--- Save settings to a file
+-- Save settings to a file using Lua's native serialization
 function gameState.save()
-    local status, jsonData = pcall(function() 
-        return love.data.encode("string", "json", gameState.settings)
-    end)
+    -- Convert settings to a Lua string representation
+    local serialized = "return " .. serializeTable(gameState.settings)
     
-    if status then
-        local data = love.filesystem.newFileData(jsonData, "settings.json")
-        local success = love.filesystem.write("settings.json", data)
-        if not success then
-            print("Error: Failed to write settings to file")
-        end
+    -- Print the path where settings are being saved
+    local path = love.filesystem.getSaveDirectory()
+    print("Saving settings to: " .. path .. "/settings.lua")
+    
+    local success = love.filesystem.write("settings.lua", serialized)
+    if not success then
+        print("Error: Failed to write settings to file")
     else
-        print("Error: Failed to encode settings to JSON: " .. jsonData)
+        print("Settings saved successfully!")
+        -- Print first few characters of serialized data
+        if serialized and #serialized > 0 then
+            print("First 100 characters of saved data: " .. string.sub(serialized, 1, 100))
+        end
     end
+end
+
+-- Helper function to serialize a table to a string
+function serializeTable(val, indent)
+    indent = indent or ""
+    local result
+    
+    if type(val) == "table" then
+        result = "{\n"
+        for k, v in pairs(val) do
+            local keyStr
+            if type(k) == "string" then
+                keyStr = "[\"" .. k .. "\"]"
+            else
+                keyStr = "[" .. tostring(k) .. "]"
+            end
+            
+            result = result .. indent .. "    " .. keyStr .. " = " .. serializeTable(v, indent .. "    ") .. ",\n"
+        end
+        result = result .. indent .. "}"
+    elseif type(val) == "string" then
+        result = "\"" .. string.gsub(val, "\"", "\\\"") .. "\""
+    elseif type(val) == "number" or type(val) == "boolean" then
+        result = tostring(val)
+    elseif val == nil then
+        result = "nil"
+    else
+        result = "\"" .. tostring(val) .. "\""
+    end
+    
+    return result
 end
 
 -- Alias for save to make code more intuitive
@@ -250,20 +390,19 @@ end
 
 -- Load settings from a file
 function gameState.load()
-    if love.filesystem.getInfo("settings.json") then
-        local data = love.filesystem.read("settings.json")
-        if not data then
-            print("Error: Failed to read settings.json")
-            return
-        end
-        
-        local success, result = pcall(function() 
-            return love.data.decode("string", "json", data) 
+    -- Check for the new Lua format settings file first
+    if love.filesystem.getInfo("settings.lua") then
+        local status, loadedSettings = pcall(function()
+            local chunk = love.filesystem.load("settings.lua")
+            if chunk then
+                return chunk()
+            end
+            return nil
         end)
         
-        if success and type(result) == "table" then
+        if status and type(loadedSettings) == "table" then
             -- Update settings with loaded values
-            for k, v in pairs(result) do
+            for k, v in pairs(loadedSettings) do
                 -- Ensure we only apply valid settings
                 if gameState.settings[k] ~= nil then
                     -- Ensure screenSize is properly structured
@@ -291,8 +430,16 @@ function gameState.load()
                 {resizable = true}
             )
         else
-            print("Error: Failed to decode settings JSON")
+            local errorMsg = type(loadedSettings) == "string" and loadedSettings or "Unknown error"
+            print("Error: Failed to load settings. " .. errorMsg)
+            -- Delete the corrupt settings file
+            love.filesystem.remove("settings.lua")
         end
+    -- Legacy JSON format support - Try to handle old settings files
+    elseif love.filesystem.getInfo("settings.json") then
+        print("Found legacy settings.json. Migrating to new format...")
+        -- Just delete the old file and start fresh
+        love.filesystem.remove("settings.json")
     end
 end
 

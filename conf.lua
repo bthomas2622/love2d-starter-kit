@@ -11,8 +11,7 @@ function love.conf(t)
     -- For Windows, macOS and Linux
     t.identity = "love2d_game"         -- The name of the save directory (string)
     t.appendidentity = true            -- Search files in source directory before save directory
-    
-    -- Modules that you don't need can be disabled to save memory
-    t.modules.joystick = false         -- Enable joystick module
+      -- Modules that you don't need can be disabled to save memory
+    t.modules.joystick = true          -- Enable joystick module
     t.modules.physics = false          -- Enable the physics module
 end

@@ -36,9 +36,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     local buttonHeight = 50 -- Height on the virtual canvas
     local buttonSpacing = 20 -- Spacing on the virtual canvas
 
-    buttons = {}
-
-    -- Play button
+    buttons = {}    -- Play button
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
         centerY - buttonHeight - buttonSpacing,
@@ -48,7 +46,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         function()
             love.switchState("play")
         end,
-        currentGuiScale -- Pass the GUI scale for button's internal detail scaling
+        currentGuiScale, -- Pass the GUI scale for button's internal detail scaling
+        false -- Disable automatic sound effects (menu will handle these)
     ))
 
     -- Settings button
@@ -61,7 +60,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         function()
             love.switchState("settings")
         end,
-        currentGuiScale -- Pass the GUI scale
+        currentGuiScale, -- Pass the GUI scale
+        false -- Disable automatic sound effects
     ))
 
     -- Quit button
@@ -74,7 +74,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         function()
             love.event.quit()
         end,
-        currentGuiScale -- Pass the GUI scale
+        currentGuiScale, -- Pass the GUI scale
+        false -- Disable automatic sound effects
     ))
 end
 
@@ -82,6 +83,7 @@ end
 function menuState.init(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     soundManager.playMusic("menu") -- Start playing menu music when entering the menu state
+    menuState.selectedButton = 1  -- Reset selected button when initializing
 end
 
 -- resize receives: virtualWidth, virtualHeight, guiScale, guiOffsetX, guiOffsetY
@@ -95,9 +97,54 @@ end
 
 -- update receives dt and the current guiScale from main.lua
 function menuState.update(dt, guiScale)
+    -- Get input manager for navigation
+    local inputManager = require "src.utils.inputManager"
+    inputManager.update(dt)
+    
     -- Update buttons, pass the guiScale for their internal logic (e.g., hover effects, animations)
-    for _, button in ipairs(buttons) do
+    for i, button in ipairs(buttons) do
         button:update(dt, guiScale)
+        
+        -- Update selected button based on hover state
+        if button.hovered then
+            menuState.selectedButton = i
+        end
+    end
+    
+    -- Handle keyboard/gamepad navigation
+    local selectedButtonChanged = false
+    
+    -- Static variable to track current selected button
+    if not menuState.selectedButton then
+        menuState.selectedButton = 1
+    end
+    
+    if inputManager.isActionJustPressed("up") then
+        menuState.selectedButton = menuState.selectedButton - 1
+        selectedButtonChanged = true
+    elseif inputManager.isActionJustPressed("down") then
+        menuState.selectedButton = menuState.selectedButton + 1
+        selectedButtonChanged = true
+    end
+    
+    -- Wrap around selection
+    if menuState.selectedButton < 1 then
+        menuState.selectedButton = #buttons
+    elseif menuState.selectedButton > #buttons then
+        menuState.selectedButton = 1
+    end
+    
+    -- Play sound on selection change
+    if selectedButtonChanged then
+        soundManager.playSound("menuMove")
+    end
+    
+    -- Handle selection with action button
+    if inputManager.isActionJustPressed("select") then
+        if buttons[menuState.selectedButton] then
+            soundManager.playSound("menuSelect")
+            buttons[menuState.selectedButton].callback()
+        end
     end
 end
 
@@ -116,16 +163,29 @@ function menuState.draw()
     )
 
     -- Draw buttons
-    for _, button in ipairs(buttons) do
-        button:draw() -- Buttons draw themselves on the virtual canvas
+    for i, button in ipairs(buttons) do
+        -- If this is the selected button, highlight it
+        if menuState.selectedButton and i == menuState.selectedButton then
+            local originalHoverColor = button.hoverColor
+            button.hoverColor = {0.7, 0.7, 1.0, 1.0}
+            button.hovered = true
+            button:draw()
+            button.hoverColor = originalHoverColor
+            button.hovered = false
+        else
+            button:draw() -- Buttons draw themselves on the virtual canvas
+        end
     end
 end
 
 function menuState.mousepressed(x, y, button)
     -- x and y are already transformed to virtual canvas coordinates by main.lua
     if button == 1 then  -- Left mouse button
-        for _, btn in ipairs(buttons) do
-            if btn:click(x, y) then return end -- If click is handled, no need to check others
+        for i, btn in ipairs(buttons) do
+            if btn:click(x, y) then 
+                menuState.selectedButton = i
+                return 
+            end
         end
     end
 end

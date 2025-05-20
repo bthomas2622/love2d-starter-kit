@@ -112,6 +112,11 @@ function Dropdown:mousepressed(x, y) -- x, y are transformed
     return false
 end
 
+-- Check if dropdown is clicked - wrapper around mousepressed for consistency with Button API
+function Dropdown:click(x, y)
+    return self:mousepressed(x, y)
+end
+
 function Dropdown:update(dt, scale) -- Receive current overall scale
     if scale and self.currentScale ~= scale then
         self.currentScale = scale

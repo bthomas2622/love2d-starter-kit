@@ -56,14 +56,17 @@ function love.load()
     love.window.setMode(
         gameState.settings.screenSize.width, 
         gameState.settings.screenSize.height, 
-        {resizable=true, minwidth=400, minheight=300}    )
-
-    fontManager.init()
+        {resizable=true, minwidth=400, minheight=300}    )    fontManager.init()
     soundManager.load()
 
     states.menu = require "src.states.menuState"
     states.play = require "src.states.playState"
     states.settings = require "src.states.settingsState"
+    states.controls = require "src.states.controlsState"
+    
+    -- Initialize input manager after states are loaded
+    local inputManager = require "src.utils.inputManager"
+    inputManager.init()
 
     -- Update transform before switching state so the initial layout is correct
     updateScreenTransform(love.graphics.getWidth(), love.graphics.getHeight())
@@ -127,9 +130,24 @@ function love.mousereleased(x, y, button)
     end
 end
 
+-- Define currentStateName before using it in the keypressed function
+local currentStateName = "menu"
+
 function love.keypressed(key)
+    if key == "escape" and currentStateName == "play" then
+        -- Special handling for escape key in play state (pause game)
+        love.switchState("menu")
+        return
+    end
+    
     if currentState and currentState.keypressed then
         currentState.keypressed(key)
+    end
+end
+
+function love.gamepadpressed(joystick, button)
+    if currentState and currentState.gamepadpressed then
+        currentState.gamepadpressed(joystick, button)
     end
 end
 
@@ -137,11 +155,10 @@ function love.wheelmoved(x_delta, y_delta) -- x_delta, y_delta are scroll amount
     if currentState and currentState.wheelmoved then
         -- Get the current mouse position and pass it to the wheelmoved handler
         local mx, my = love.mouse.getPosition()
-        currentState.wheelmoved(x_delta, y_delta, mx, my)
+        local virtualX, virtualY = transformMousePosition(mx, my)
+        currentState.wheelmoved(x_delta, y_delta, virtualX, virtualY)
     end
 end
-
-local currentStateName = "menu"
 
 function switchState(stateName)
     local oldStateName = currentStateName

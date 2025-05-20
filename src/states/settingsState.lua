@@ -147,8 +147,20 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         end,
         currentGuiScale
     )
-    langDropdown.maxVisibleOptions = 6
-    table.insert(dropdowns, langDropdown)
+    langDropdown.maxVisibleOptions = 6    table.insert(dropdowns, langDropdown)
+    
+    -- Controls button
+    table.insert(buttons, Button.new(
+        centerX - buttonWidth / 2,
+        startY + spacing * 4,
+        buttonWidth,
+        buttonHeight,
+        gameState.getText("controls"),
+        function()
+            love.switchState("controls")
+        end,
+        currentGuiScale
+    ))
 
     -- Back button (returns to menu without saving)
     table.insert(buttons, Button.new(
@@ -182,6 +194,8 @@ end
 function settingsState.init(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     tempSettings = deepcopy(gameState.settings)
     recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
+    -- Initialize selection to first slider
+    settingsState.selectedElement = {type = "slider", index = 1}
 end
 
 function settingsState.resize(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
@@ -193,6 +207,16 @@ function settingsState.resize(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
 end
 
 function settingsState.update(dt, guiScale)
+    -- Get input manager for navigation
+    local inputManager = require "src.utils.inputManager"
+    inputManager.update(dt)
+    
+    -- Initialize current selection if needed
+    if not settingsState.selectedElement then
+        settingsState.selectedElement = {type = "slider", index = 1}
+    end
+    
+    -- Update UI elements
     for _, button in ipairs(buttons) do
         button:update(dt, guiScale)
     end
@@ -201,6 +225,105 @@ function settingsState.update(dt, guiScale)
     end
     for _, dropdown in ipairs(dropdowns) do
         dropdown:update(dt, guiScale)
+    end
+    
+    -- Check if any dropdown is open - restrict movement when dropdown is open
+    local anyDropdownOpen = false
+    for _, dropdown in ipairs(dropdowns) do
+        if dropdown.open then
+            anyDropdownOpen = true
+            -- Handle dropdown navigation
+            if inputManager.isActionJustPressed("up") then
+                dropdown:selectPrevious()
+                soundManager.playSound("menuMove")
+                return
+            elseif inputManager.isActionJustPressed("down") then
+                dropdown:selectNext()
+                soundManager.playSound("menuMove")
+                return
+            elseif inputManager.isActionJustPressed("select") then
+                dropdown:selectCurrent()
+                soundManager.playSound("menuSelect")
+                return
+            elseif inputManager.isActionJustPressed("back") then
+                dropdown:close()
+                soundManager.playSound("menuBack")
+                return
+            end
+        end
+    end
+    
+    if not anyDropdownOpen then
+        -- Handle keyboard/gamepad navigation between elements
+        local selectedChanged = false
+        
+        if inputManager.isActionJustPressed("up") then
+            if settingsState.selectedElement.type == "slider" and settingsState.selectedElement.index > 1 then
+                settingsState.selectedElement.index = settingsState.selectedElement.index - 1
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index > 1 then
+                settingsState.selectedElement.index = settingsState.selectedElement.index - 1
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "button" then
+                settingsState.selectedElement = {type = "dropdown", index = #dropdowns}
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == 1 then
+                settingsState.selectedElement = {type = "slider", index = #sliders}
+                selectedChanged = true
+            end
+        elseif inputManager.isActionJustPressed("down") then
+            if settingsState.selectedElement.type == "slider" and settingsState.selectedElement.index < #sliders then
+                settingsState.selectedElement.index = settingsState.selectedElement.index + 1
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "slider" and settingsState.selectedElement.index == #sliders then
+                settingsState.selectedElement = {type = "dropdown", index = 1}
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index < #dropdowns then
+                settingsState.selectedElement.index = settingsState.selectedElement.index + 1
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == #dropdowns then
+                settingsState.selectedElement = {type = "button", index = 1}
+                selectedChanged = true
+            end
+        elseif inputManager.isActionJustPressed("left") then
+            if settingsState.selectedElement.type == "slider" then
+                local slider = sliders[settingsState.selectedElement.index]
+                if slider then
+                    slider:setValue(slider.value - slider.range / 20)
+                end
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 2 then
+                settingsState.selectedElement.index = 1
+                selectedChanged = true
+            end
+        elseif inputManager.isActionJustPressed("right") then
+            if settingsState.selectedElement.type == "slider" then
+                local slider = sliders[settingsState.selectedElement.index]
+                if slider then
+                    slider:setValue(slider.value + slider.range / 20)
+                end
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 1 then
+                settingsState.selectedElement.index = 2
+                selectedChanged = true
+            end
+        elseif inputManager.isActionJustPressed("select") then
+            -- Activate the selected element
+            if settingsState.selectedElement.type == "button" then
+                buttons[settingsState.selectedElement.index]:click()
+            elseif settingsState.selectedElement.type == "dropdown" then
+                local dropdown = dropdowns[settingsState.selectedElement.index]
+                if dropdown and not dropdown.open then
+                    dropdown:toggle()
+                    soundManager.playSound("menuSelect")
+                end
+            end
+        elseif inputManager.isActionJustPressed("back") then
+            love.switchState("menu")
+            soundManager.playSound("menuBack")
+        end
+        
+        if selectedChanged then
+            soundManager.playSound("menuMove")
+        end
     end
 end
 
@@ -212,15 +335,41 @@ function settingsState.draw()
     local titleW = titleFont and titleFont:getWidth(settingsText) or 0
     love.graphics.print(settingsText, virtualWidth / 2 - titleW / 2, virtualHeight * 0.06)
 
-    -- Draw UI components
-    for _, button in ipairs(buttons) do
-        button:draw()
-    end
-    for _, slider in ipairs(sliders) do
+    -- Draw UI components with highlighting based on selection
+    for i, slider in ipairs(sliders) do
+        if settingsState.selectedElement and settingsState.selectedElement.type == "slider" and settingsState.selectedElement.index == i then
+            -- Highlight the selected slider
+            love.graphics.setColor(0.8, 0.8, 1.0, 0.3)
+            love.graphics.rectangle("fill", slider.x - 10, slider.y - 10, 
+                                    slider.width + 20, slider.height + 30)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
         slider:draw()
     end
-    for _, dropdown in ipairs(dropdowns) do
+    
+    for i, dropdown in ipairs(dropdowns) do
+        if settingsState.selectedElement and settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == i and not dropdown.open then
+            -- Highlight the selected dropdown
+            love.graphics.setColor(0.8, 0.8, 1.0, 0.3)
+            love.graphics.rectangle("fill", dropdown.x - 10, dropdown.y - 10, 
+                                    dropdown.width + 20, dropdown.height + 20)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
         dropdown:draw()
+    end
+    
+    for i, button in ipairs(buttons) do
+        -- Highlight the selected button
+        if settingsState.selectedElement and settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == i then
+            local originalHoverColor = button.hoverColor
+            button.hoverColor = {0.7, 0.7, 1.0, 1.0}
+            button.hovered = true
+            button:draw()
+            button.hoverColor = originalHoverColor
+            button.hovered = false
+        else
+            button:draw()
+        end
     end
 end
 
@@ -229,44 +378,59 @@ function settingsState.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
         -- Check if any dropdown is open first
         local anyDropdownOpen = false
-        for _, dropdown in ipairs(dropdowns) do
+        for i, dropdown in ipairs(dropdowns) do
             if dropdown.open then
                 anyDropdownOpen = true
                 -- If a dropdown is open and we click on it, handle the click
                 if dropdown:mousepressed(x, y) then 
+                    settingsState.selectedElement = {type = "dropdown", index = i}
                     return 
                 end
             end
         end
-        
+
         -- If any dropdown is open, clicks should only affect dropdowns
         if anyDropdownOpen then
             -- Check if click is outside all dropdowns - close them if so
             local clickedOutside = true
             for _, dropdown in ipairs(dropdowns) do
-                if dropdown:isMouseOver(x, y) then
+                if dropdown.isMouseOver and dropdown:isMouseOver(x, y) then
                     clickedOutside = false
                     break
                 end
             end
-              if clickedOutside then
+            
+            if clickedOutside then
                 -- Close all dropdowns when clicking elsewhere
                 for _, dropdown in ipairs(dropdowns) do
                     dropdown:close()
                 end
             end
-            return
-        end
+            return        end
         
         -- Normal click processing when no dropdowns are open
-        for _, btn in ipairs(buttons) do
-            if btn:click(x, y) then return end -- If click handled, exit
+        -- Check sliders
+        for i, slider in ipairs(sliders) do
+            if slider:click(x, y) then
+                settingsState.selectedElement = {type = "slider", index = i}
+                return
+            end
         end
-        for _, slider in ipairs(sliders) do
-            if slider:mousepressed(x, y) then return end
+        
+        -- Check dropdowns
+        for i, dropdown in ipairs(dropdowns) do
+            if dropdown:click(x, y) then
+                settingsState.selectedElement = {type = "dropdown", index = i}
+                return
+            end
         end
-        for _, dropdown in ipairs(dropdowns) do
-            if dropdown:mousepressed(x, y) then return end
+        
+        -- Check buttons
+        for i, btn in ipairs(buttons) do
+            if btn:click(x, y) then
+                settingsState.selectedElement = {type = "button", index = i}
+                return
+            end
         end
     end
 end

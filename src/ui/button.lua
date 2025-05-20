@@ -9,7 +9,7 @@ Button.__index = Button
 -- Create a new button
 -- x, y, width, height are on the virtual canvas (e.g., 800x450)
 -- guiScale is the overall scale factor from main.lua, used for fine details
-function Button.new(x, y, width, height, text, callback, guiScale)
+function Button.new(x, y, width, height, text, callback, guiScale, playSounds)
     local self = setmetatable({}, Button)
     self.x = x         -- Position on the virtual canvas
     self.y = y         -- Position on the virtual canvas
@@ -19,6 +19,8 @@ function Button.new(x, y, width, height, text, callback, guiScale)
     self.callback = callback
     self.hovered = false
     self.guiScale = guiScale or 1 -- Store the GUI scale for detail scaling
+    self.playSounds = playSounds -- If true (default), play sounds on hover/click. If false, no sounds.
+    if self.playSounds == nil then self.playSounds = true end -- Default to true if not specified
 
     -- Default colors
     self.normalColor = {0.4, 0.4, 0.5, 1}
@@ -50,7 +52,8 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
 
     if currentMainScale and currentMainScale ~= 0 then -- Prevent division by zero
         virtualMouseX = (rawMouseX - offsetX) / currentMainScale
-        virtualMouseY = (rawMouseY - offsetY) / currentMainScale    else
+        virtualMouseY = (rawMouseY - offsetY) / currentMainScale
+    else
         -- If scale is 0 or nil, cannot accurately determine hover, assume not hovered.
         self.hovered = false
         return
@@ -62,7 +65,7 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
                    virtualMouseY >= self.y and virtualMouseY <= self.y + self.height
     
     -- Play menu move sound when hover state changes
-    if not previousHoverState and self.hovered then
+    if not previousHoverState and self.hovered and self.playSounds then
         soundManager.playSound("menuMove")
     end
 end
@@ -107,7 +110,9 @@ function Button:click(virtualX, virtualY)
     -- virtualX, virtualY are already transformed coordinates from the state (originally from main.lua)
     if virtualX >= self.x and virtualX <= self.x + self.width and
        virtualY >= self.y and virtualY <= self.y + self.height then
-        soundManager.playSound("menuSelect")
+        if self.playSounds then
+            soundManager.playSound("menuSelect")
+        end
         if self.callback then
             self.callback()
         end
