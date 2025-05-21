@@ -18,6 +18,7 @@ function Button.new(x, y, width, height, text, callback, guiScale, playSounds)
     self.text = text
     self.callback = callback
     self.hovered = false
+    self.disabled = false -- Add disabled state
     self.guiScale = guiScale or 1 -- Store the GUI scale for detail scaling
     self.playSounds = playSounds -- If true (default), play sounds on hover/click. If false, no sounds.
     if self.playSounds == nil then self.playSounds = true end -- Default to true if not specified
@@ -25,7 +26,9 @@ function Button.new(x, y, width, height, text, callback, guiScale, playSounds)
     -- Default colors
     self.normalColor = {0.4, 0.4, 0.5, 1}
     self.hoverColor = {0.5, 0.5, 0.6, 1}
-    self.textColor = {1, 1, 1, 1}    -- Font sized for the virtual canvas (e.g., 16pt for an 800x450 canvas)
+    self.disabledColor = {0.3, 0.3, 0.35, 0.7} -- Dimmed color for disabled state
+    self.textColor = {1, 1, 1, 1}
+    self.disabledTextColor = {0.7, 0.7, 0.7, 0.7} -- Dimmed text for disabled state-- Font sized for the virtual canvas (e.g., 16pt for an 800x450 canvas)
     -- It will be scaled visually by main.lua's global transform.
     self.font = fontManager.getFont(16) -- Base font size for virtual canvas
     
@@ -40,6 +43,12 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
     if guiScale and self.guiScale ~= guiScale then
         self.guiScale = guiScale
         -- Font is already sized for the virtual canvas, no need to change it based on guiScale here.
+    end
+
+    -- If disabled, don't process hover effects
+    if self.disabled then
+        self.hovered = false
+        return
     end
 
     -- Mouse position for hover detection.
@@ -84,17 +93,21 @@ function Button:draw()
     if lineWidth < 1 then lineWidth = 1 end -- Ensure line width is at least 1 pixel on screen
 
     -- Draw the button background
-    love.graphics.setColor(self.hovered and self.hoverColor or self.normalColor)
+    if self.disabled then
+        love.graphics.setColor(self.disabledColor)
+    else
+        love.graphics.setColor(self.hovered and self.hoverColor or self.normalColor)
+    end
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
 
     -- Draw the button border
-    love.graphics.setColor(1, 1, 1, 0.8)
+    love.graphics.setColor(self.disabled and {0.5, 0.5, 0.5, 0.5} or {1, 1, 1, 0.8})
     love.graphics.setLineWidth(lineWidth)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
     love.graphics.setLineWidth(1) -- Reset line width to default for other drawing operations
 
     -- Draw the text
-    love.graphics.setColor(self.textColor)
+    love.graphics.setColor(self.disabled and self.disabledTextColor or self.textColor)
     love.graphics.setFont(self.font) -- self.font is already sized for the virtual canvas
 
     local textWidth = self.font:getWidth(self.text)   -- Width on virtual canvas
@@ -112,7 +125,7 @@ end
 -- Check if button is clicked
 function Button:click(virtualX, virtualY)
     -- virtualX, virtualY are already transformed coordinates from the state (originally from main.lua)
-    if virtualX >= self.x and virtualX <= self.x + self.width and
+    if not self.disabled and virtualX >= self.x and virtualX <= self.x + self.width and
        virtualY >= self.y and virtualY <= self.y + self.height then
         if self.playSounds then
             soundManager.playSound("menuSelect")

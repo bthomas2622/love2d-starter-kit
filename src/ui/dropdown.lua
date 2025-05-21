@@ -33,7 +33,8 @@ function Dropdown.new(x, y, width, height, options, selectedIndex, label, onChan
 
     -- Colors
     self.backgroundColor = {0.4, 0.4, 0.5, 1}
-    self.hoverColor = {0.5, 0.5, 0.6, 1}    self.textColor = {1, 1, 1, 1}
+    self.hoverColor = {0.5, 0.5, 0.6, 1}
+    self.textColor = {1, 1, 1, 1}
     self.hoveredOption = nil
     -- Use fixed font sizes for the virtual canvas - scaling is handled by Love's transform
     self.font = fontManager.getFont(16) -- Standard font size
@@ -49,6 +50,44 @@ end
 
 function Dropdown:close()
     self.open = false
+end
+
+function Dropdown:selectPrevious()
+    if self.open and #self.options > 0 then
+        local hoveredOrSelected = self.hoveredOption or self.selectedIndex
+        local newIndex = hoveredOrSelected - 1
+        
+        -- Handle wrap-around
+        if newIndex < 1 then
+            newIndex = #self.options
+        end
+        
+        self.hoveredOption = newIndex
+    end
+end
+
+function Dropdown:selectNext()
+    if self.open and #self.options > 0 then
+        local hoveredOrSelected = self.hoveredOption or self.selectedIndex
+        local newIndex = hoveredOrSelected + 1
+        
+        -- Handle wrap-around
+        if newIndex > #self.options then
+            newIndex = 1
+        end
+        
+        self.hoveredOption = newIndex
+    end
+end
+
+function Dropdown:selectCurrent()
+    if self.open and self.hoveredOption then
+        self.selectedIndex = self.hoveredOption
+        if self.onChange then
+            self.onChange(self.selectedIndex, self.options[self.selectedIndex])
+        end
+        self.open = false
+    end
 end
 
 function Dropdown:mousepressed(x, y) -- x, y are transformed
@@ -76,7 +115,8 @@ function Dropdown:mousepressed(x, y) -- x, y are transformed
             local relativeIndex = i - startIndex
             local optionY
             if self.direction == "up" then
-                optionY = self.y - (visibleCount - relativeIndex) * optionDrawHeight            else
+                optionY = self.y - (visibleCount - relativeIndex) * optionDrawHeight
+            else
                 optionY = self.y + self.height + relativeIndex * optionDrawHeight
             end
             
@@ -130,7 +170,8 @@ function Dropdown:update(dt, scale) -- Receive current overall scale
     local mx, my = love.mouse.getPosition() -- Raw screen coordinates
     local s, ox, oy, baseW, baseH = love.getScreenTransform()
     local tmx = (mx - ox) / s
-    local tmy = (my - oy) / s    local oldHoveredOption = self.hoveredOption
+    local tmy = (my - oy) / s
+    local oldHoveredOption = self.hoveredOption
     self.hoveredOption = nil
     if self.open then
         local visibleCount = math.min(#self.options, self.maxVisibleOptions)
@@ -286,6 +327,11 @@ function Dropdown:draw()
     love.graphics.setLineWidth(1)
 
     if self.open then
+        -- Drawing dropdown options in a way that they'll always be on top
+        -- First, save the current scissor state
+        local prevScissor = {love.graphics.getScissor()}
+        love.graphics.setScissor() -- Clear scissor to ensure dropdown appears on top
+        
         local visibleCount = math.min(#self.options, self.maxVisibleOptions)
         local startIndex = self.scrollOffset + 1
         local endIndex = math.min(startIndex + visibleCount - 1, #self.options)
@@ -300,8 +346,23 @@ function Dropdown:draw()
             containerY = self.y + self.height
         end
 
-        love.graphics.setColor(0.1, 0.1, 0.15, 0.9)
-        love.graphics.rectangle("fill", self.x - (2 * self.currentScale), containerY - (2 * self.currentScale), self.width + (4 * self.currentScale), containerHeight + (4 * self.currentScale), 6 * self.currentScale, 6 * self.currentScale)
+        -- Add a semi-transparent overlay to visually separate the dropdown from other elements
+        love.graphics.setColor(0.1, 0.1, 0.15, 0.6)
+        love.graphics.rectangle("fill", 0, 0, bw, bh)
+
+        -- Draw dropdown options container with more visible background
+        love.graphics.setColor(0.1, 0.1, 0.15, 0.95)
+        love.graphics.rectangle("fill", self.x - (2 * self.currentScale), containerY - (2 * self.currentScale), 
+                              self.width + (4 * self.currentScale), containerHeight + (4 * self.currentScale), 
+                              6 * self.currentScale, 6 * self.currentScale)
+                              
+        -- Add a visible border to make the dropdown stand out
+        love.graphics.setColor(0.6, 0.6, 0.8, 0.8)
+        love.graphics.setLineWidth(2 * self.currentScale)
+        love.graphics.rectangle("line", self.x - (2 * self.currentScale), containerY - (2 * self.currentScale), 
+                              self.width + (4 * self.currentScale), containerHeight + (4 * self.currentScale), 
+                              6 * self.currentScale, 6 * self.currentScale)
+        love.graphics.setLineWidth(1)
 
         for i = startIndex, endIndex do
             local option = self.options[i]
@@ -320,27 +381,24 @@ function Dropdown:draw()
             else
                 love.graphics.setColor(self.backgroundColor)
             end
-            love.graphics.rectangle("fill", self.x, optionY, self.width, optionDrawHeight)            love.graphics.setColor(self.textColor)
+            love.graphics.rectangle("fill", self.x, optionY, self.width, optionDrawHeight)
+            
+            love.graphics.setColor(self.textColor)
             love.graphics.setFont(self.font)
             local optText = option.label or option
             local optTextX = self.x + (10 * self.currentScale)
             local optTextY = optionY + (optionDrawHeight - self.font:getHeight()) / 2
-              -- Use love.graphics.transformPoint to get proper screen coordinates
-            local cx, cy = love.graphics.transformPoint(self.x, optionY)
-            local cw = self.width * scale
-            local ch = optionDrawHeight * scale
             
-            -- Apply scissor in screen coordinates with proper padding
-            love.graphics.setScissor(
-                cx + (5 * self.currentScale) * scale, 
-                cy, 
-                cw - (10 * self.currentScale) * scale, 
-                ch
-            )
+            -- Draw option text without scissor since we're handling overlap differently
             love.graphics.print(optText, optTextX, optTextY)
+        end
+          -- Restore previous scissor if there was one
+        if prevScissor[1] then
+            -- Use table.unpack instead of unpack for Lua 5.4 compatibility
+            love.graphics.setScissor(table.unpack(prevScissor))
+        else
             love.graphics.setScissor()
         end
-        -- Scroll indicators could also be scaled here if implemented
     end
     love.graphics.setColor(1,1,1,1) -- Reset color
 end

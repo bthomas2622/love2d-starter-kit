@@ -104,7 +104,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
 
     local screenDropdown = Dropdown.new(
         centerX - controlWidth / 2,
-        startY + spacing * 2,
+        startY + spacing * 2 - 30,
         controlWidth,
         controlHeight,
         screenOptions,
@@ -134,7 +134,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
 
     local langDropdown = Dropdown.new(
         centerX - controlWidth / 2,
-        startY + spacing * 3,
+        startY + spacing * 3 - 30,
         controlWidth,
         controlHeight,
         languageOptions,
@@ -148,7 +148,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     langDropdown.maxVisibleOptions = 6    table.insert(dropdowns, langDropdown)    -- Controls button - positioned directly below the language dropdown with minimal spacing
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
-        startY + spacing * 3 + controlHeight + 15, -- Reduced spacing between language dropdown and controls button
+        startY + spacing * 3 + controlHeight * 2, -- Reduced spacing between language dropdown and controls button
         buttonWidth,
         buttonHeight,
         gameState.getText("controls"),
@@ -210,6 +210,26 @@ function settingsState.update(dt, guiScale)
         settingsState.selectedElement = {type = "slider", index = 1}
     end
     
+    -- Check if any dropdown is open
+    local anyDropdownOpen = false
+    for _, dropdown in ipairs(dropdowns) do
+        if dropdown.open then
+            anyDropdownOpen = true
+            break
+        end
+    end
+    
+    -- Disable buttons if any dropdown is open
+    for _, button in ipairs(buttons) do
+        button.disabled = anyDropdownOpen
+    end
+    
+    -- If a button is selected but dropdowns are open, deselect it
+    if anyDropdownOpen and settingsState.selectedElement and settingsState.selectedElement.type == "button" then
+        -- Find closest dropdown to select instead
+        settingsState.selectedElement = {type = "dropdown", index = #dropdowns}
+    end
+    
     -- Update UI elements
     for _, button in ipairs(buttons) do
         button:update(dt, guiScale)
@@ -222,10 +242,8 @@ function settingsState.update(dt, guiScale)
     end
     
     -- Check if any dropdown is open - restrict movement when dropdown is open
-    local anyDropdownOpen = false
     for _, dropdown in ipairs(dropdowns) do
         if dropdown.open then
-            anyDropdownOpen = true
             -- Handle dropdown navigation
             if inputManager.isActionJustPressed("up") then
                 dropdown:selectPrevious()
@@ -329,7 +347,21 @@ function settingsState.draw()
     local titleW = titleFont and titleFont:getWidth(settingsText) or 0
     love.graphics.print(settingsText, virtualWidth / 2 - titleW / 2, virtualHeight * 0.06)
 
-    -- Draw UI components with highlighting based on selection
+    -- Check if any dropdowns are open
+    local anyDropdownOpen = false
+    for _, dropdown in ipairs(dropdowns) do
+        if dropdown.open then
+            anyDropdownOpen = true
+            break
+        end
+    end
+    
+    -- Disable buttons if any dropdown is open
+    for _, button in ipairs(buttons) do
+        button.disabled = anyDropdownOpen
+    end
+
+    -- Draw UI components with highlighting based on selection - draw sliders first
     for i, slider in ipairs(sliders) do
         if settingsState.selectedElement and settingsState.selectedElement.type == "slider" and settingsState.selectedElement.index == i then
             -- Highlight the selected slider
@@ -341,20 +373,10 @@ function settingsState.draw()
         slider:draw()
     end
     
-    for i, dropdown in ipairs(dropdowns) do
-        if settingsState.selectedElement and settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == i and not dropdown.open then
-            -- Highlight the selected dropdown
-            love.graphics.setColor(0.8, 0.8, 1.0, 0.3)
-            love.graphics.rectangle("fill", dropdown.x - 10, dropdown.y - 10, 
-                                    dropdown.width + 20, dropdown.height + 20)
-            love.graphics.setColor(1, 1, 1, 1)
-        end
-        dropdown:draw()
-    end
-    
+    -- Draw buttons second
     for i, button in ipairs(buttons) do
         -- Highlight the selected button
-        if settingsState.selectedElement and settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == i then
+        if not anyDropdownOpen and settingsState.selectedElement and settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == i then
             local originalHoverColor = button.hoverColor
             button.hoverColor = {0.7, 0.7, 1.0, 1.0}
             button.hovered = true
@@ -364,6 +386,18 @@ function settingsState.draw()
         else
             button:draw()
         end
+    end
+    
+    -- Draw dropdowns last so they appear on top of everything
+    for i, dropdown in ipairs(dropdowns) do
+        if settingsState.selectedElement and settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == i and not dropdown.open then
+            -- Highlight the selected dropdown
+            love.graphics.setColor(0.8, 0.8, 1.0, 0.3)
+            love.graphics.rectangle("fill", dropdown.x - 10, dropdown.y - 10, 
+                                    dropdown.width + 20, dropdown.height + 20)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+        dropdown:draw()
     end
 end
 
@@ -400,7 +434,8 @@ function settingsState.mousepressed(x, y, button)
                     dropdown:close()
                 end
             end
-            return        end
+            return
+        end
         
         -- Normal click processing when no dropdowns are open
         -- Check sliders
@@ -419,9 +454,9 @@ function settingsState.mousepressed(x, y, button)
             end
         end
         
-        -- Check buttons
+        -- Check buttons - buttons respect their own disabled state
         for i, btn in ipairs(buttons) do
-            if btn:click(x, y) then
+            if not btn.disabled and btn:click(x, y) then
                 settingsState.selectedElement = {type = "button", index = i}
                 return
             end
