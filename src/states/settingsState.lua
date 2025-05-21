@@ -46,12 +46,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     currentGuiScale = guiScale
 
     -- Font sized for virtual canvas - main.lua's transform will scale it on screen
-    titleFont = fontManager.getFont(30) -- Base size for virtual canvas
-
-    -- Calculate positions on the virtual canvas
+    titleFont = fontManager.getFont(30) -- Base size for virtual canvas    -- Calculate positions on the virtual canvas
     local centerX = virtualWidth / 2
-    local startY = virtualHeight * 0.16 -- Relative positioning
-    local spacing = virtualHeight * 0.18
+    local startY = virtualHeight * 0.14 -- Slightly reduced starting position
+    local spacing = virtualHeight * 0.15 -- Reduced spacing for more compact layout
 
     local controlWidth = virtualWidth * 0.38 -- Relative width
     local buttonWidth = virtualWidth * 0.18
@@ -147,12 +145,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         end,
         currentGuiScale
     )
-    langDropdown.maxVisibleOptions = 6    table.insert(dropdowns, langDropdown)
-    
-    -- Controls button
+    langDropdown.maxVisibleOptions = 6    table.insert(dropdowns, langDropdown)    -- Controls button - positioned directly below the language dropdown with minimal spacing
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
-        startY + spacing * 4,
+        startY + spacing * 3 + controlHeight + 15, -- Reduced spacing between language dropdown and controls button
         buttonWidth,
         buttonHeight,
         gameState.getText("controls"),
@@ -160,12 +156,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
             love.switchState("controls")
         end,
         currentGuiScale
-    ))
-
-    -- Back button (returns to menu without saving)
+    ))-- Back button (returns to menu without saving)
     table.insert(buttons, Button.new(
         centerX - buttonWidth - 20,
-        virtualHeight - buttonHeight - 20,
+        virtualHeight - buttonHeight - 20, -- Keep at bottom of screen
         buttonWidth,
         buttonHeight,
         gameState.getText("back"),
@@ -178,7 +172,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     -- Apply button (saves settings and returns to menu)
     table.insert(buttons, Button.new(
         centerX + 20,
-        virtualHeight - buttonHeight - 20,
+        virtualHeight - buttonHeight - 20, -- Keep at bottom of screen
         buttonWidth,
         buttonHeight,
         gameState.getText("apply"),        function()
