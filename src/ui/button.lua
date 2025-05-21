@@ -28,8 +28,10 @@ function Button.new(x, y, width, height, text, callback, guiScale, playSounds)
     self.textColor = {1, 1, 1, 1}    -- Font sized for the virtual canvas (e.g., 16pt for an 800x450 canvas)
     -- It will be scaled visually by main.lua's global transform.
     self.font = fontManager.getFont(16) -- Base font size for virtual canvas
-    self.wasHoveredLastFrame = false -- Track hover state changes for sound effects
-
+    
+    -- Track the last update's hover state to only play sound once
+    self.lastHoverState = false
+    
     return self
 end
 
@@ -38,7 +40,6 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
     if guiScale and self.guiScale ~= guiScale then
         self.guiScale = guiScale
         -- Font is already sized for the virtual canvas, no need to change it based on guiScale here.
-        -- self.font = fontManager.getFont(math.floor(16 * self.guiScale)) -- This was incorrect
     end
 
     -- Mouse position for hover detection.
@@ -58,19 +59,19 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
         self.hovered = false
         return
     end
-      -- Check hover against button's virtual canvas coordinates
-    local previousHoverState = self.hovered
-    self.hovered = virtualMouseX >= self.x and virtualMouseX <= self.x + self.width and
-                   virtualMouseY >= self.y and virtualMouseY <= self.y + self.height
     
-    -- Play menu move sound when hover state changes
-    -- Don't play sound in controlsState - we handle that in the state's mousemoved function
-    if not previousHoverState and self.hovered and self.playSounds then
-        -- Only play the sound if we're not in the controls state
-        if love.getCurrentStateName and love.getCurrentStateName() ~= "controls" then
-            soundManager.playSound("menuMove")
-        end
+    -- Calculate the current hover state based on mouse position
+    local currentlyHovered = virtualMouseX >= self.x and virtualMouseX <= self.x + self.width and
+                           virtualMouseY >= self.y and virtualMouseY <= self.y + self.height
+    
+    -- Only play sound when the button transitions from not hovered to hovered
+    if currentlyHovered and not self.lastHoverState and self.playSounds then
+        soundManager.playSound("menuMove")
     end
+    
+    -- Update tracking states for next frame
+    self.lastHoverState = currentlyHovered
+    self.hovered = currentlyHovered
 end
 
 -- Draw the button
@@ -125,3 +126,4 @@ function Button:click(virtualX, virtualY)
 end
 
 return Button
+

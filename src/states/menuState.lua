@@ -47,10 +47,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
             love.switchState("play")
         end,
         currentGuiScale, -- Pass the GUI scale for button's internal detail scaling
-        false -- Disable automatic sound effects (menu will handle these)
-    ))
-
-    -- Settings button
+        true -- Enable automatic sound effects
+    ))    -- Settings button
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
         centerY,
@@ -61,10 +59,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
             love.switchState("settings")
         end,
         currentGuiScale, -- Pass the GUI scale
-        false -- Disable automatic sound effects
-    ))
-
-    -- Quit button
+        true -- Enable automatic sound effects
+    ))    -- Quit button
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
         centerY + buttonHeight + buttonSpacing,
@@ -75,7 +71,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
             love.event.quit()
         end,
         currentGuiScale, -- Pass the GUI scale
-        false -- Disable automatic sound effects
+        true -- Enable automatic sound effects
     ))
 end
 
@@ -99,48 +95,71 @@ end
 function menuState.update(dt, guiScale)
     -- Get input manager for navigation
     local inputManager = require "src.utils.inputManager"
-    inputManager.update(dt)
-    
-    -- Update buttons, pass the guiScale for their internal logic (e.g., hover effects, animations)
+    inputManager.update(dt)    -- Update buttons, pass the guiScale for their internal logic (e.g., hover effects, animations)
+    local hoveredButton = nil
     for i, button in ipairs(buttons) do
         button:update(dt, guiScale)
         
-        -- Update selected button based on hover state
+        -- Track which button is hovered but don't immediately update selection
         if button.hovered then
-            menuState.selectedButton = i
+            hoveredButton = i
+        end
+    end
+    
+    -- Only update the selected button if a button is being hovered
+    if hoveredButton ~= nil then
+        -- Only update if the hover has changed
+        if menuState.selectedButton ~= hoveredButton then
+            menuState.selectedButton = hoveredButton
         end
     end
     
     -- Handle keyboard/gamepad navigation
     local selectedButtonChanged = false
-    
-    -- Static variable to track current selected button
-    if not menuState.selectedButton then
-        menuState.selectedButton = 1
+      -- Ensure we have a default selection only for keyboard navigation
+    -- If the mouse is not over any button, we still need a selection for keyboard controls
+    if menuState.selectedButton == nil then
+        -- Only set a default selection if we need to handle keyboard input
+        if inputManager.isActionJustPressed("up") or
+           inputManager.isActionJustPressed("down") or
+           inputManager.isActionJustPressed("select") then
+            menuState.selectedButton = 1
+            -- Don't play the selection sound here as the keyboard navigation
+            -- will handle playing sounds when direction keys are pressed
+        end
     end
-    
-    if inputManager.isActionJustPressed("up") then
-        menuState.selectedButton = menuState.selectedButton - 1
+      if inputManager.isActionJustPressed("up") then
+        -- If no button is selected, select the first one
+        if menuState.selectedButton == nil then
+            menuState.selectedButton = 1
+        else
+            menuState.selectedButton = menuState.selectedButton - 1
+        end
         selectedButtonChanged = true
     elseif inputManager.isActionJustPressed("down") then
-        menuState.selectedButton = menuState.selectedButton + 1
+        -- If no button is selected, select the first one
+        if menuState.selectedButton == nil then
+            menuState.selectedButton = 1
+        else
+            menuState.selectedButton = menuState.selectedButton + 1
+        end
         selectedButtonChanged = true
     end
-    
-    -- Wrap around selection
-    if menuState.selectedButton < 1 then
-        menuState.selectedButton = #buttons
-    elseif menuState.selectedButton > #buttons then
-        menuState.selectedButton = 1
+      -- Wrap around selection if we have a selection
+    if menuState.selectedButton ~= nil then
+        if menuState.selectedButton < 1 then
+            menuState.selectedButton = #buttons
+        elseif menuState.selectedButton > #buttons then
+            menuState.selectedButton = 1
+        end
     end
     
     -- Play sound on selection change
     if selectedButtonChanged then
         soundManager.playSound("menuMove")
     end
-    
-    -- Handle selection with action button
-    if inputManager.isActionJustPressed("select") then
+      -- Handle selection with action button
+    if inputManager.isActionJustPressed("select") and menuState.selectedButton ~= nil then
         if buttons[menuState.selectedButton] then
             soundManager.playSound("menuSelect")
             buttons[menuState.selectedButton].callback()
@@ -160,12 +179,10 @@ function menuState.draw()
         title,
         virtualWidth / 2 - titleWidth / 2, -- Position on the virtual canvas
         virtualHeight * 0.2 -- Adjusted Y position to be relative to virtual height
-    )
-
-    -- Draw buttons
+    )    -- Draw buttons
     for i, button in ipairs(buttons) do
-        -- If this is the selected button, highlight it
-        if menuState.selectedButton and i == menuState.selectedButton then
+        -- If there's a selected button and this is it, highlight it
+        if menuState.selectedButton ~= nil and i == menuState.selectedButton then
             local originalHoverColor = button.hoverColor
             button.hoverColor = {0.7, 0.7, 1.0, 1.0}
             button.hovered = true
@@ -173,6 +190,7 @@ function menuState.draw()
             button.hoverColor = originalHoverColor
             button.hovered = false
         else
+            -- Just draw the button in its normal state
             button:draw() -- Buttons draw themselves on the virtual canvas
         end
     end
@@ -188,6 +206,31 @@ function menuState.mousepressed(x, y, button)
             end
         end
     end
+end
+
+function menuState.mousemoved(x, y)
+    -- x and y are already transformed to virtual canvas coordinates by main.lua
+    
+    -- Track the previously selected button to detect changes
+    local previousSelection = menuState.selectedButton
+    
+    -- Check if mouse is over any button
+    for i, btn in ipairs(buttons) do
+        if x >= btn.x and x <= btn.x + btn.width and
+           y >= btn.y and y <= btn.y + btn.height then
+            -- Update selected button
+            menuState.selectedButton = i
+            
+            -- Since buttons now handle their own sound effects,
+            -- we no longer need to play sounds here.
+            -- This prevents duplicate sound effects.
+            
+            return
+        end
+    end
+      -- If we got here, we're not hovering over any button
+    -- Clear the selection
+    menuState.selectedButton = nil
 end
 
 return menuState

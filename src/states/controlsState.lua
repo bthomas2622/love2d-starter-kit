@@ -256,7 +256,7 @@ function controlsState.draw()
     -- Draw title
     love.graphics.setFont(titleFont)
     local title = gameState.getText("controls")
-    local titleWidth = titleFont:getWidth(title)
+    local titleWidth = titleFont and titleFont:getWidth(title) or 0
     
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(
@@ -326,12 +326,13 @@ function controlsState.draw()
         
         love.graphics.setFont(titleFont)
         local promptText = "Press any key..."
-        local promptWidth = titleFont:getWidth(promptText)
+        local promptWidth = titleFont and titleFont:getWidth(promptText) or 0
+        local promptHeight = titleFont and titleFont:getHeight() or 0
         
         love.graphics.print(
             promptText,
             virtualWidth / 2 - promptWidth / 2,
-            virtualHeight / 2 - titleFont:getHeight() / 2
+            virtualHeight / 2 - promptHeight / 2
         )
     end
 end
@@ -381,6 +382,7 @@ function controlsState.mousemoved(x, y)
     -- Only update and play sound if selection changed
     if hoveredButton and selectedButtonIndex ~= hoveredButton then
         selectedButtonIndex = hoveredButton
+        -- Always play the sound when the selected button changes
         soundManager.playSound("menuMove")
     end
 end
