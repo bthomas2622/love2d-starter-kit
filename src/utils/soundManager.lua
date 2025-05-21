@@ -63,4 +63,23 @@ function soundManager.updateVolumes()
     -- Sound effects will get new volume when they're played
 end
 
+-- Update volume levels immediately
+function soundManager.updateVolumesNow(musicVolume, effectsVolume)
+    if not musicVolume then
+        musicVolume = gameState.settings.musicVolume
+    end
+    if not effectsVolume then
+        effectsVolume = gameState.settings.effectsVolume
+    end
+    -- Update music volume
+    if currentMusic and music[currentMusic] then
+        music[currentMusic]:setVolume(musicVolume)
+    end
+    -- Update sound effects volume
+    for _, sound in pairs(sounds) do
+        sound:setVolume(effectsVolume)
+    end
+end
+-- Stop all sounds
+
 return soundManager

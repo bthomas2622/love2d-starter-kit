@@ -70,7 +70,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         gameState.getText("musicVolume"),
         function(value)
             tempSettings.musicVolume = value
-            soundManager.updateVolumes() -- Apply volume change immediately
+            soundManager.updateVolumesNow(tempSettings.musicVolume, nil) -- Apply volume change immediately
         end,
         currentGuiScale
     ))
@@ -85,7 +85,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         gameState.getText("effectsVolume"),
         function(value)
             tempSettings.effectsVolume = value
-            soundManager.updateVolumes() -- Apply volume change immediately
+            soundManager.updateVolumesNow(nil, tempSettings.effectsVolume) -- Apply volume change immediately
         end,
         currentGuiScale
     ))
@@ -262,6 +262,54 @@ function settingsState.update(dt, guiScale)
                 soundManager.playSound("menuBack")
                 return
             end
+        end
+    end
+
+    -- Mouse hover selection logic (only if no dropdown is open)
+    if not anyDropdownOpen then
+        local rawMx, rawMy = love.mouse.getPosition()
+        local currentMainScale, offsetX, offsetY = love.getScreenTransform()
+
+        local mx = rawMx
+        local my = rawMy
+
+        if currentMainScale and currentMainScale ~= 0 then
+            mx = (rawMx - offsetX) / currentMainScale
+            my = (rawMy - offsetY) / currentMainScale
+        else
+            -- If scale is 0 or nil, cannot accurately determine hover, so skip hover update
+            return
+        end
+
+        local hovered = nil
+        -- Check dropdowns first (topmost)
+        for i, dropdown in ipairs(dropdowns) do
+            if dropdown:isMouseOver(mx, my) then
+                hovered = {type = "dropdown", index = i}
+                break
+            end
+        end
+        -- Check buttons if not already hovering a dropdown
+        if not hovered then
+            for i, button in ipairs(buttons) do
+                if not button.disabled and mx >= button.x and mx <= button.x + button.width and my >= button.y and my <= button.y + button.height then
+                    hovered = {type = "button", index = i}
+                    break
+                end
+            end
+        end
+        -- Check sliders if not already hovering something else
+        if not hovered then
+            for i, slider in ipairs(sliders) do
+                if slider:isMouseOver(mx, my) then
+                    hovered = {type = "slider", index = i}
+                    break
+                end
+            end
+        end
+        -- If hovered element is different from selected, update selection
+        if hovered and (not settingsState.selectedElement or hovered.type ~= settingsState.selectedElement.type or hovered.index ~= settingsState.selectedElement.index) then
+            settingsState.selectedElement = hovered
         end
     end
     

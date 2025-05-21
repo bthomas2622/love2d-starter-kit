@@ -145,4 +145,10 @@ function Slider:draw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- Check if mouse is over the slider
+function Slider:isMouseOver(mx, my)
+    -- mx, my are in virtual canvas coordinates
+    return mx >= self.x and mx <= self.x + self.width and my >= self.y and my <= self.y + self.height
+end
+
 return Slider
