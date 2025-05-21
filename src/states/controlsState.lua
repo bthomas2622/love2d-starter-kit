@@ -1,3 +1,4 @@
+-- filepath: c:\Users\Ben\Documents\LoveProjects\love2d-starter-kit\src\states\controlsState.lua
 -- Controls Settings State
 local love = require("love")
 local Button = require "src.ui.button"
@@ -29,6 +30,19 @@ local bindableActions = {
 -- Variable to track selected button index
 local selectedButtonIndex = 1
 
+-- Function to update all control button texts with current bindings
+local function updateControlButtonTexts()
+    -- Make sure we refresh all control buttons with current bindings
+    for _, btn in ipairs(controlButtons) do
+        if btn.deviceType and btn.actionType then
+            -- Force get the latest binding text
+            btn.text = inputManager.getBindingText(btn.deviceType, btn.actionType)
+        end
+    end
+    -- Force a visual update by returning true
+    return true
+end
+
 local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     -- Always get the actual virtual canvas dimensions from the main transform
     local _, _, _, baseWidth, baseHeight = love.getScreenTransform()
@@ -43,6 +57,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     local startY = virtualHeight * 0.15
     local spacing = virtualHeight * 0.07
     
+    -- Clear existing buttons
     buttons = {}
     controlButtons = {}
     
@@ -114,18 +129,40 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         end,
         currentGuiScale
     ))
-    
-    -- Reset button
+      -- Reset button
     table.insert(buttons, Button.new(
         centerX + 20,
         virtualHeight * 0.85,
         buttonWidth,
         buttonHeight,
-        gameState.getText("reset"),
-        function()
-            inputManager.resetToDefaults()
+        gameState.getText("reset"),        function()
+            -- First play the sound
             soundManager.playSound("menuSelect")
-            recalculateLayout(virtualWidth, virtualHeight, currentGuiScale, guiOffsetX, guiOffsetY)
+            
+            -- Reset key bindings to defaults - returns the new bindings
+            local newBindings = inputManager.resetToDefaults()
+            
+            -- Debug output to verify default values were restored
+            print("Reset defaults - keyboard 'right' is now: " .. newBindings.keyboard.right)
+            
+            -- Force refresh of all control buttons with updated texts
+            for _, btn in ipairs(controlButtons) do
+                if btn.deviceType and btn.actionType then
+                    -- First clear button text to ensure visual update
+                    btn.text = ""
+                    
+                    -- Important: Force refresh the text from input manager
+                    btn.text = inputManager.getBindingText(btn.deviceType, btn.actionType)
+                    
+                    -- Print confirmation for the button update
+                    if btn.actionType == "right" and btn.deviceType == "keyboard" then
+                        print("Updated 'right' button text to: " .. btn.text)
+                    end
+                end
+            end
+            
+            -- Force a redraw
+            love.graphics.present()
         end,
         currentGuiScale
     ))
@@ -313,6 +350,38 @@ function controlsState.mousepressed(x, y, button)
                 return
             end
         end
+    end
+end
+
+function controlsState.mousemoved(x, y)
+    -- Don't update when waiting for input
+    if waitingForInput then
+        return
+    end
+    
+    -- Update selectedButtonIndex based on mouse hover
+    local hoveredButton = nil
+    
+    for i, btn in ipairs(buttons) do
+        local mouseX, mouseY = x, y
+        local scale, offsetX, offsetY = love.getScreenTransform()
+        
+        if scale and scale ~= 0 then
+            mouseX = (x - offsetX) / scale
+            mouseY = (y - offsetY) / scale
+        end
+        
+        if mouseX >= btn.x and mouseX <= btn.x + btn.width and
+           mouseY >= btn.y and mouseY <= btn.y + btn.height then
+            hoveredButton = i
+            break
+        end
+    end
+    
+    -- Only update and play sound if selection changed
+    if hoveredButton and selectedButtonIndex ~= hoveredButton then
+        selectedButtonIndex = hoveredButton
+        soundManager.playSound("menuMove")
     end
 end
 

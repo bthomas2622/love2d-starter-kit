@@ -130,6 +130,13 @@ function love.mousereleased(x, y, button)
     end
 end
 
+function love.mousemoved(x, y, dx, dy)
+    local virtualX, virtualY = transformMousePosition(x, y)
+    if currentState and currentState.mousemoved then
+        currentState.mousemoved(virtualX, virtualY, dx, dy)
+    end
+end
+
 -- Define currentStateName before using it in the keypressed function
 local currentStateName = "menu"
 

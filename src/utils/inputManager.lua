@@ -46,11 +46,41 @@ function inputManager.init()
     
     -- Load key bindings from settings or use defaults
     if gameState.settings.keyBindings then
-        inputManager.keyBindings = gameState.settings.keyBindings
+        -- Create a deep copy of settings to avoid reference issues
+        inputManager.keyBindings = {
+            keyboard = {},
+            gamepad = {}
+        }
+        
+        -- Copy all keyboard bindings
+        for action, key in pairs(gameState.settings.keyBindings.keyboard) do
+            inputManager.keyBindings.keyboard[action] = key
+        end
+        
+        -- Copy all gamepad bindings
+        for action, button in pairs(gameState.settings.keyBindings.gamepad) do
+            inputManager.keyBindings.gamepad[action] = button
+        end
     else
-        inputManager.keyBindings = defaultKeyBindings
-        gameState.settings.keyBindings = defaultKeyBindings
-        gameState.save() -- Save the default settings
+        -- Create a deep copy of default key bindings
+        inputManager.keyBindings = {
+            keyboard = {},
+            gamepad = {}
+        }
+        
+        -- Copy all keyboard bindings
+        for action, key in pairs(defaultKeyBindings.keyboard) do
+            inputManager.keyBindings.keyboard[action] = key
+        end
+        
+        -- Copy all gamepad bindings
+        for action, button in pairs(defaultKeyBindings.gamepad) do
+            inputManager.keyBindings.gamepad[action] = button
+        end
+        
+        -- Save the deep-copied defaults
+        gameState.settings.keyBindings = inputManager.keyBindings
+        gameState.save()
     end
     
     -- Initialize gamepad if available
@@ -164,7 +194,13 @@ end
 
 -- Get a text representation of a key binding
 function inputManager.getBindingText(device, action)
+    -- Always get the most up-to-date binding from the keyBindings table
     local binding = inputManager.keyBindings[device][action]
+    
+    -- Debug output to help track bindings
+    if action == "right" and device == "keyboard" then
+        print("getBindingText for keyboard 'right' returning: " .. (binding or "nil"))
+    end
     
     -- Format text for display
     if device == "keyboard" then
@@ -194,14 +230,15 @@ function inputManager.getBindingText(device, action)
             return "X Button"
         elseif binding == "y" then
             return "Y Button"
-        elseif binding:sub(1, 9) == "leftstick" then
+        elseif binding and binding:sub(1, 9) == "leftstick" then
             return "Left Stick " .. binding:sub(11):upper()
-        else
+        elseif binding then
             return binding:sub(1,1):upper() .. binding:sub(2)
         end
     end
     
-    return binding
+    -- Fallback to just show the raw binding if available
+    return binding or "Not Set"
 end
 
 -- Set a new key binding
@@ -213,9 +250,39 @@ end
 
 -- Reset all bindings to default
 function inputManager.resetToDefaults()
-    inputManager.keyBindings = defaultKeyBindings
-    gameState.settings.keyBindings = defaultKeyBindings
+    print("=== RESETTING ALL KEY BINDINGS TO DEFAULTS ===")
+    
+    -- Completely clear and recreate the key bindings
+    inputManager.keyBindings = {
+        keyboard = {},
+        gamepad = {}
+    }
+    
+    -- For debugging, print default keyboard bindings
+    print("Default keyboard bindings:")
+    for action, key in pairs(defaultKeyBindings.keyboard) do
+        print("  " .. action .. ": " .. key)
+    end
+    
+    -- Copy all keyboard bindings from defaults
+    for action, key in pairs(defaultKeyBindings.keyboard) do
+        inputManager.keyBindings.keyboard[action] = key
+    end
+    
+    -- Copy all gamepad bindings from defaults
+    for action, button in pairs(defaultKeyBindings.gamepad) do
+        inputManager.keyBindings.gamepad[action] = button
+    end
+    
+    -- Verify the copied values
+    print("Keyboard right binding was reset to: " .. inputManager.keyBindings.keyboard.right)
+    
+    -- First save to the settings
+    gameState.settings.keyBindings = inputManager.keyBindings
     gameState.save()
+    
+    -- Return the new bindings
+    return inputManager.keyBindings
 end
 
 -- Callback functions for gamepad connection/disconnection

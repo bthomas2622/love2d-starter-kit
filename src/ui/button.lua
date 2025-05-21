@@ -58,15 +58,18 @@ function Button:update(dt, guiScale) -- Receive current overall guiScale
         self.hovered = false
         return
     end
-    
-    -- Check hover against button's virtual canvas coordinates
+      -- Check hover against button's virtual canvas coordinates
     local previousHoverState = self.hovered
     self.hovered = virtualMouseX >= self.x and virtualMouseX <= self.x + self.width and
                    virtualMouseY >= self.y and virtualMouseY <= self.y + self.height
     
     -- Play menu move sound when hover state changes
+    -- Don't play sound in controlsState - we handle that in the state's mousemoved function
     if not previousHoverState and self.hovered and self.playSounds then
-        soundManager.playSound("menuMove")
+        -- Only play the sound if we're not in the controls state
+        if love.getCurrentStateName and love.getCurrentStateName() ~= "controls" then
+            soundManager.playSound("menuMove")
+        end
     end
 end
 

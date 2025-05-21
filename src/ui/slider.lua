@@ -51,6 +51,11 @@ function Slider:setFromPosition(pos)
     end
 end
 
+-- Handle mouse click (alias for mousepressed for compatibility)
+function Slider:click(x, y)
+    return self:mousepressed(x, y)
+end
+
 -- Handle mouse press
 function Slider:mousepressed(x, y)
     -- x and y are already in virtual canvas coordinates
