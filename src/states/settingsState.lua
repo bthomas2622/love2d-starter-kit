@@ -300,8 +300,12 @@ function settingsState.update(dt, guiScale)
         elseif inputManager.isActionJustPressed("left") then
             if settingsState.selectedElement.type == "slider" then
                 local slider = sliders[settingsState.selectedElement.index]
-                if slider then
-                    slider:setValue(slider.value - slider.range / 20)
+                if slider and slider.setValue then
+                    slider:setValue(slider.value - ((slider.max or 1) - (slider.min or 0)) / 20)
+                elseif slider then
+                    -- fallback: direct assignment if setValue is missing
+                    slider.value = math.max((slider.min or 0), slider.value - ((slider.max or 1) - (slider.min or 0)) / 20)
+                    if slider.onChange then slider.onChange(slider.value) end
                 end
             elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 2 then
                 settingsState.selectedElement.index = 1
@@ -310,8 +314,14 @@ function settingsState.update(dt, guiScale)
         elseif inputManager.isActionJustPressed("right") then
             if settingsState.selectedElement.type == "slider" then
                 local slider = sliders[settingsState.selectedElement.index]
-                if slider then
-                    slider:setValue(slider.value + slider.range / 20)
+                if slider and slider.setValue then
+                    local range = (slider.max or 1) - (slider.min or 0)
+                    slider:setValue(slider.value + range / 20)
+                elseif slider then
+                    -- fallback: direct assignment if setValue is missing
+                    local range = (slider.max or 1) - (slider.min or 0)
+                    slider.value = math.min((slider.max or 1), slider.value + range / 20)
+                    if slider.onChange then slider.onChange(slider.value) end
                 end
             elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 1 then
                 settingsState.selectedElement.index = 2
@@ -516,6 +526,18 @@ function settingsState.wheelmoved(x_delta, y_delta, rawMousePos)
             if dropdown:wheelmoved(x_delta, y_delta, mx, my) then 
                 return 
             end
+        end
+    end
+end
+
+function settingsState.keypressed(key)
+    -- If a dropdown is open, send key to it
+    for _, dropdown in ipairs(dropdowns) do
+        if dropdown.open then
+            if dropdown.keypressed then
+                dropdown:keypressed(key)
+            end
+            return
         end
     end
 end

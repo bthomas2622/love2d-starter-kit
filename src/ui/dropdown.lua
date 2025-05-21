@@ -52,6 +52,17 @@ function Dropdown:close()
     self.open = false
 end
 
+function Dropdown:toggle()
+    self.open = not self.open
+    if self.open then
+        self.scrollOffset = 0
+        if self.selectedIndex > self.maxVisibleOptions then
+            self.scrollOffset = self.selectedIndex - math.ceil(self.maxVisibleOptions / 2)
+            self.scrollOffset = math.min(self.scrollOffset, #self.options - self.maxVisibleOptions)
+        end
+    end
+end
+
 function Dropdown:selectPrevious()
     if self.open and #self.options > 0 then
         local hoveredOrSelected = self.hoveredOption or self.selectedIndex
@@ -273,6 +284,20 @@ function Dropdown:wheelmoved(x_delta, y_delta, rawMouseX, rawMouseY)
     return false -- Event not handled
 end
 
+-- Add keyboard navigation support for dropdown
+function Dropdown:keypressed(key)
+    if not self.open then return end
+    if key == "up" then
+        self:selectPrevious()
+    elseif key == "down" then
+        self:selectNext()
+    elseif key == "return" or key == "kpenter" then
+        self:selectCurrent()
+    elseif key == "escape" then
+        self:close()
+    end
+end
+
 function Dropdown:draw()
     -- Get the current scale from love.getScreenTransform
     local scale = self.currentScale
@@ -327,10 +352,14 @@ function Dropdown:draw()
     love.graphics.setLineWidth(1)
 
     if self.open then
-        -- Drawing dropdown options in a way that they'll always be on top
-        -- First, save the current scissor state
+        -- Save current scissor state
         local prevScissor = {love.graphics.getScissor()}
-        love.graphics.setScissor() -- Clear scissor to ensure dropdown appears on top
+        -- Clear scissor to draw over everything
+        love.graphics.setScissor()
+        
+        -- Add a semi-transparent overlay over the entire screen
+        love.graphics.setColor(0.1, 0.1, 0.15, 0.5)
+        love.graphics.rectangle("fill", 0, 0, bw, bh)
         
         local visibleCount = math.min(#self.options, self.maxVisibleOptions)
         local startIndex = self.scrollOffset + 1
@@ -345,10 +374,6 @@ function Dropdown:draw()
             containerHeight = visibleCount * optionDrawHeight
             containerY = self.y + self.height
         end
-
-        -- Add a semi-transparent overlay to visually separate the dropdown from other elements
-        love.graphics.setColor(0.1, 0.1, 0.15, 0.6)
-        love.graphics.rectangle("fill", 0, 0, bw, bh)
 
         -- Draw dropdown options container with more visible background
         love.graphics.setColor(0.1, 0.1, 0.15, 0.95)
@@ -392,9 +417,10 @@ function Dropdown:draw()
             -- Draw option text without scissor since we're handling overlap differently
             love.graphics.print(optText, optTextX, optTextY)
         end
-          -- Restore previous scissor if there was one
+        
+        -- Restore previous scissor if there was one
         if prevScissor[1] then
-            -- Use table.unpack instead of unpack for Lua 5.4 compatibility
+            -- Use table.unpack for Lua 5.4 compatibility
             love.graphics.setScissor(table.unpack(prevScissor))
         else
             love.graphics.setScissor()
