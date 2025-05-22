@@ -21,6 +21,14 @@ function soundManager.load()
     sounds.menuSelect = love.audio.newSource("assets/sounds/MenuSelect.ogg", "static")
     sounds.menuMove = love.audio.newSource("assets/sounds/MenuMove.ogg", "static")
     sounds.menuBack = love.audio.newSource("assets/sounds/MenuBack.ogg", "static")
+    
+    -- Snake game sounds
+    if love.filesystem.getInfo("assets/sounds/FruitEat.ogg") then
+        sounds.fruitEat = love.audio.newSource("assets/sounds/FruitEat.ogg", "static")
+    else
+        -- Create a fallback sound using the menu select sound
+        sounds.fruitEat = sounds.menuSelect:clone()
+    end
 end
 
 -- Play music with current volume setting
