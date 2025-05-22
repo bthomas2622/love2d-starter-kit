@@ -76,9 +76,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     local columnWidth = virtualWidth * 0.35
     local buttonWidth = virtualWidth * 0.15
     local buttonHeight = virtualHeight * 0.06
-    
-    -- Create keyboard controls column
-    local keyboardX = centerX - columnWidth - 20
+      -- Create keyboard controls column
+    local keyboardX = centerX - columnWidth + 200  -- Changed from -20 to +60 to move closer to the center
     for i, action in ipairs(bindableActions) do
         -- Create button for rebinding
         local buttonY = startY + spacing * i
@@ -129,7 +128,7 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     
     -- Back button
     table.insert(buttons, Button.new(
-        centerX - columnWidth - 20,
+        centerX - columnWidth + 200,
         virtualHeight * 0.85,
         buttonWidth,
         buttonHeight,
@@ -302,7 +301,7 @@ function controlsState.draw()
     
     love.graphics.print(
         gameState.getText("keyboard"),
-        centerX - columnWidth - 20,
+        centerX - columnWidth + 200,
         virtualHeight * 0.12
     )
     
@@ -314,14 +313,13 @@ function controlsState.draw()
     local startY = virtualHeight * 0.15
     local spacing = virtualHeight * 0.07
     
-    love.graphics.setColor(1, 1, 1, 1)
-    for i, action in ipairs(bindableActions) do
+    love.graphics.setColor(1, 1, 1, 1)    for i, action in ipairs(bindableActions) do
         local actionY = startY + spacing * i
         local actionText = gameState.getText(action)
         local actionWidth = labelFont and labelFont:getWidth(actionText) or 0        -- Draw the action label on the left side
         love.graphics.print(
             actionText,
-            virtualWidth * 0.05,
+            virtualWidth * 0.2,  -- Changed from 0.05 (5%) to 0.15 (15%) to move closer to the center
             actionY + virtualHeight * 0.02
         )
     end
