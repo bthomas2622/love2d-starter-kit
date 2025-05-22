@@ -324,7 +324,11 @@ function settingsState.update(dt, guiScale)
             elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index > 1 then
                 settingsState.selectedElement.index = settingsState.selectedElement.index - 1
                 selectedChanged = true
-            elseif settingsState.selectedElement.type == "button" then
+            elseif settingsState.selectedElement.type == "button" and (settingsState.selectedElement.index == 2 or settingsState.selectedElement.index == 3) then
+                -- If Back or Apply button is selected, move up to Controls button
+                settingsState.selectedElement = {type = "button", index = 1}
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 1 then
                 settingsState.selectedElement = {type = "dropdown", index = #dropdowns}
                 selectedChanged = true
             elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == 1 then
@@ -344,6 +348,10 @@ function settingsState.update(dt, guiScale)
             elseif settingsState.selectedElement.type == "dropdown" and settingsState.selectedElement.index == #dropdowns then
                 settingsState.selectedElement = {type = "button", index = 1}
                 selectedChanged = true
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 1 then
+                -- If the Controls button (index 1) is selected, move to the Back button (index 2)
+                settingsState.selectedElement = {type = "button", index = 2}
+                selectedChanged = true
             end
         elseif inputManager.isActionJustPressed("left") then
             if settingsState.selectedElement.type == "slider" then
@@ -355,8 +363,9 @@ function settingsState.update(dt, guiScale)
                     slider.value = math.max((slider.min or 0), slider.value - ((slider.max or 1) - (slider.min or 0)) / 20)
                     if slider.onChange then slider.onChange(slider.value) end
                 end
-            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 2 then
-                settingsState.selectedElement.index = 1
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 3 then
+                -- From Apply button (index 3) to Back button (index 2)
+                settingsState.selectedElement.index = 2
                 selectedChanged = true
             end
         elseif inputManager.isActionJustPressed("right") then
@@ -373,6 +382,10 @@ function settingsState.update(dt, guiScale)
                 end
             elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 1 then
                 settingsState.selectedElement.index = 2
+                selectedChanged = true
+            elseif settingsState.selectedElement.type == "button" and settingsState.selectedElement.index == 2 then
+                -- From Back button (index 2) to Apply button (index 3)
+                settingsState.selectedElement.index = 3
                 selectedChanged = true
             end
         elseif inputManager.isActionJustPressed("select") then

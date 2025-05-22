@@ -124,9 +124,18 @@ end
 
 -- Check if button is clicked
 function Button:click(virtualX, virtualY)
-    -- virtualX, virtualY are already transformed coordinates from the state (originally from main.lua)
-    if not self.disabled and virtualX >= self.x and virtualX <= self.x + self.width and
-       virtualY >= self.y and virtualY <= self.y + self.height then
+    -- virtualX, virtualY are optional and used for hit detection
+    -- If they're not provided, the button is being activated directly (e.g., by keyboard/gamepad)
+    if not self.disabled then
+        -- If coordinates are provided, check if the click is within the button boundaries
+        if virtualX and virtualY then
+            if not (virtualX >= self.x and virtualX <= self.x + self.width and
+                   virtualY >= self.y and virtualY <= self.y + self.height) then
+                return false
+            end
+        end
+        
+        -- If we're here, either the coords are within the button or none were provided
         if self.playSounds then
             soundManager.playSound("menuSelect")
         end

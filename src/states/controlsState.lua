@@ -240,11 +240,10 @@ function controlsState.update(dt, guiScale)
         soundManager.playSound("menuMove")
         if selectedButtonIndex % 2 == 1 and selectedButtonIndex < #buttons then
             selectedButtonIndex = selectedButtonIndex + 1
-        end
-    elseif inputManager.isActionJustPressed("select") then
+        end    elseif inputManager.isActionJustPressed("select") then
         -- Activate the selected button
         if buttons[selectedButtonIndex] then
-            buttons[selectedButtonIndex].callback()
+            buttons[selectedButtonIndex]:click()
         end
     elseif inputManager.isActionJustPressed("back") then
         soundManager.playSound("menuBack")
