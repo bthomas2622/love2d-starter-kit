@@ -345,7 +345,11 @@ function controlsState.mousepressed(x, y, button)
             return
         end
         
+        -- Note: x, y are already transformed to virtual canvas coordinates by main.lua
+        
+        -- Check for button clicks
         for i, btn in ipairs(buttons) do
+            -- Use Button's click method which handles the sound and callback
             if btn:click(x, y) then
                 selectedButtonIndex = i
                 return
@@ -363,17 +367,12 @@ function controlsState.mousemoved(x, y)
     -- Update selectedButtonIndex based on mouse hover
     local hoveredButton = nil
     
+    -- Note: x, y are already transformed to virtual canvas coordinates by main.lua
+    
+    -- Check if mouse is over any button
     for i, btn in ipairs(buttons) do
-        local mouseX, mouseY = x, y
-        local scale, offsetX, offsetY = love.getScreenTransform()
-        
-        if scale and scale ~= 0 then
-            mouseX = (x - offsetX) / scale
-            mouseY = (y - offsetY) / scale
-        end
-        
-        if mouseX >= btn.x and mouseX <= btn.x + btn.width and
-           mouseY >= btn.y and mouseY <= btn.y + btn.height then
+        if x >= btn.x and x <= btn.x + btn.width and
+           y >= btn.y and y <= btn.y + btn.height then
             hoveredButton = i
             break
         end
@@ -382,7 +381,7 @@ function controlsState.mousemoved(x, y)
     -- Only update and play sound if selection changed
     if hoveredButton and selectedButtonIndex ~= hoveredButton then
         selectedButtonIndex = hoveredButton
-        -- Always play the sound when the selected button changes
+        -- Play the sound when the selected button changes
         soundManager.playSound("menuMove")
     end
 end
