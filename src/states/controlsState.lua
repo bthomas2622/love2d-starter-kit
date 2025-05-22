@@ -11,6 +11,17 @@ local controlsState = {}
 
 local buttons = {}
 local controlButtons = {}
+
+-- Final button array order after recalculateLayout():
+-- 1: Keyboard UP        7: Gamepad UP
+-- 2: Keyboard DOWN      8: Gamepad DOWN
+-- 3: Keyboard LEFT      9: Gamepad LEFT
+-- 4: Keyboard RIGHT     10: Gamepad RIGHT
+-- 5: Keyboard SELECT    11: Gamepad SELECT
+-- 6: Keyboard BACK      12: Gamepad BACK
+-- 13: Back button (to return to settings)
+-- 14: Reset button
+
 local titleFont = nil
 local labelFont = nil
 local waitingForInput = false
@@ -220,27 +231,46 @@ function controlsState.update(dt, guiScale)
     
     -- Handle gamepad/keyboard navigation
     if inputManager.isActionJustPressed("up") then
-        soundManager.playSound("menuMove")
-        selectedButtonIndex = selectedButtonIndex - 2
-        if selectedButtonIndex < 1 then
-            selectedButtonIndex = #buttons - (selectedButtonIndex + 2)
+        if selectedButtonIndex ~= 1 and selectedButtonIndex ~= 7 then
+            if selectedButtonIndex < 13 then
+                selectedButtonIndex = selectedButtonIndex - 1
+                soundManager.playSound("menuMove")
+            elseif selectedButtonIndex == 13 then
+                selectedButtonIndex = 6
+                soundManager.playSound("menuMove")
+            elseif selectedButtonIndex == 14 then
+                selectedButtonIndex = 12
+                soundManager.playSound("menuMove")
+            end
         end
     elseif inputManager.isActionJustPressed("down") then
-        soundManager.playSound("menuMove")
-        selectedButtonIndex = selectedButtonIndex + 2
-        if selectedButtonIndex > #buttons then
-            selectedButtonIndex = selectedButtonIndex - #buttons
+        if selectedButtonIndex ~= 13 and selectedButtonIndex ~= 14 and selectedButtonIndex ~= 6 and selectedButtonIndex ~= 12 then
+            selectedButtonIndex = selectedButtonIndex + 1
+            soundManager.playSound("menuMove")
+        elseif selectedButtonIndex == 6 then
+            selectedButtonIndex = 13
+            soundManager.playSound("menuMove")
+        elseif selectedButtonIndex == 12 then
+            selectedButtonIndex = 14
+            soundManager.playSound("menuMove")
         end
     elseif inputManager.isActionJustPressed("left") then
-        soundManager.playSound("menuMove")
-        if selectedButtonIndex % 2 == 0 then
-            selectedButtonIndex = selectedButtonIndex - 1
+        if selectedButtonIndex > 6 and selectedButtonIndex < 13 then
+            selectedButtonIndex = selectedButtonIndex - 6
+            soundManager.playSound("menuMove")
+        elseif selectedButtonIndex == 14 then
+            selectedButtonIndex = 13
+            soundManager.playSound("menuMove")
         end
     elseif inputManager.isActionJustPressed("right") then
-        soundManager.playSound("menuMove")
-        if selectedButtonIndex % 2 == 1 and selectedButtonIndex < #buttons then
-            selectedButtonIndex = selectedButtonIndex + 1
-        end    elseif inputManager.isActionJustPressed("select") then
+        if selectedButtonIndex < 7 then
+            selectedButtonIndex = selectedButtonIndex + 6
+            soundManager.playSound("menuMove")
+        elseif selectedButtonIndex == 13 then
+            selectedButtonIndex = 14
+            soundManager.playSound("menuMove")
+        end
+    elseif inputManager.isActionJustPressed("select") then
         -- Activate the selected button
         if buttons[selectedButtonIndex] then
             buttons[selectedButtonIndex]:click()
