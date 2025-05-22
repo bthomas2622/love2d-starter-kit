@@ -16,10 +16,11 @@ function Slider.new(x, y, width, height, min, max, value, label, onChange, guiSc
     self.min = min or 0
     self.max = max or 1
     self.value = value or self.min    self.label = label or ""
-    self.onChange = onChange
-    self.dragging = false
+    self.onChange = onChange    self.dragging = false
     self.guiScale = guiScale or 1
     self.lastValue = value -- To track value changes for sound effects
+    self.hovered = false -- Track if the mouse is hovering over the slider
+    self.lastHoverState = false -- Track previous hover state to detect changes
 
     -- Colors
     self.barColor = {0.4, 0.4, 0.5, 1}
@@ -90,14 +91,31 @@ function Slider:update(dt, guiScale)
         -- Font is already sized for virtual canvas - no need to update
     end
 
-    if self.dragging then
-        -- Get the mouse position in virtual canvas coordinates
-        local mx, my = love.mouse.getPosition()
-        local scale, offsetX, offsetY = love.getScreenTransform()
+    -- Check for hover state
+    local rawMouseX, rawMouseY = love.mouse.getPosition()
+    local scale, offsetX, offsetY = love.getScreenTransform()
 
-        if scale and scale ~= 0 then -- Prevent division by zero
-            local virtualMouseX = (mx - offsetX) / scale
-            self:updateValue(virtualMouseX)
+    if scale and scale ~= 0 then -- Prevent division by zero
+        local mx = (rawMouseX - offsetX) / scale
+        local my = (rawMouseY - offsetY) / scale
+        
+        -- Check if mouse is hovering over the slider
+        local sliderArea = 20 -- Extra area around slider to make it easier to detect
+        local currentlyHovered = mx >= self.x - sliderArea and mx <= self.x + self.width + sliderArea and
+                               my >= self.y - sliderArea and my <= self.y + self.height + sliderArea
+        
+        -- Play sound when we first hover over the slider
+        if currentlyHovered and not self.lastHoverState then
+            soundManager.playSound("menuMove")
+        end
+        
+        -- Update tracking states
+        self.lastHoverState = currentlyHovered
+        self.hovered = currentlyHovered
+        
+        -- Handle dragging
+        if self.dragging then
+            self:updateValue(mx)
         end
     end
 end

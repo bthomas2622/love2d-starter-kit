@@ -33,6 +33,10 @@ local virtualWidth = 1280
 local virtualHeight = 720
 local currentGuiScale = 1
 
+-- Add a cooldown timer to prevent executing the remapped input
+local remappingCooldown = 0
+local remappingCooldownTime = 0.5 -- Half a second cooldown after remapping
+
 -- Actions that can be bound
 local bindableActions = {
     "up", "down", "left", "right", "select", "back"
@@ -205,6 +209,7 @@ function controlsState.init(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
     currentBindingDevice = nil
     currentBindingAction = nil
     selectedButtonIndex = 1
+    remappingCooldown = 0 -- Reset cooldown when entering the screen
 end
 
 function controlsState.resize(vWidth, vHeight, guiScale, guiOffsetX, guiOffsetY)
@@ -217,6 +222,17 @@ end
 function controlsState.update(dt, guiScale)
     -- Update input manager
     inputManager.update(dt)
+    
+    -- Update remapping cooldown timer if active
+    if remappingCooldown > 0 then
+        remappingCooldown = remappingCooldown - dt
+        if remappingCooldown <= 0 then
+            remappingCooldown = 0
+            -- Debug output to confirm cooldown ended
+            print("Remapping cooldown ended, inputs now active again")
+        end
+        return -- Skip all input processing during cooldown
+    end
     
     -- Don't process navigation when waiting for input
     if waitingForInput then
@@ -344,8 +360,11 @@ function controlsState.draw()
         end
     end
     
-    -- Draw "Press any key" message if waiting for input
+    -- Draw "Press any key" message if waiting for input    
     if waitingForInput then
+        -- Ensure we have a valid GUI scale for the modal dialog
+        currentGuiScale = currentGuiScale or 1
+        
         love.graphics.setColor(0, 0, 0, 0.8)
         love.graphics.rectangle("fill", virtualWidth * 0.3, virtualHeight * 0.4, virtualWidth * 0.4, virtualHeight * 0.2)
         
@@ -366,6 +385,11 @@ function controlsState.draw()
 end
 
 function controlsState.mousepressed(x, y, button)
+    -- Skip all mouse input during cooldown period
+    if remappingCooldown > 0 then
+        return
+    end
+    
     if button == 1 then
         if waitingForInput then
             -- Cancel rebinding on mouse click
@@ -387,8 +411,8 @@ function controlsState.mousepressed(x, y, button)
 end
 
 function controlsState.mousemoved(x, y)
-    -- Don't update when waiting for input
-    if waitingForInput then
+    -- Don't update when waiting for input or during cooldown
+    if waitingForInput or remappingCooldown > 0 then
         return
     end
     
@@ -428,6 +452,10 @@ function controlsState.keypressed(key)
         
         waitingForInput = false
         soundManager.playSound("menuSelect")
+        
+        -- Activate cooldown to prevent the new key from being processed as an action
+        remappingCooldown = remappingCooldownTime
+        print("Remapping cooldown started - preventing input execution for " .. remappingCooldownTime .. " seconds")
     end
 end
 
@@ -445,6 +473,10 @@ function controlsState.gamepadpressed(joystick, button)
         
         waitingForInput = false
         soundManager.playSound("menuSelect")
+        
+        -- Activate cooldown to prevent the new button from being processed as an action
+        remappingCooldown = remappingCooldownTime
+        print("Remapping cooldown started - preventing input execution for " .. remappingCooldownTime .. " seconds")
     end
 end
 
