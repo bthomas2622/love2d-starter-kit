@@ -310,17 +310,18 @@ function controlsState.draw()
         gameState.getText("gamepad"),
         centerX + 20,
         virtualHeight * 0.12
-    )
-    
-    -- Draw action labels
+    )    -- Draw action labels
     local startY = virtualHeight * 0.15
     local spacing = virtualHeight * 0.07
     
+    love.graphics.setColor(1, 1, 1, 1)
     for i, action in ipairs(bindableActions) do
         local actionY = startY + spacing * i
+        local actionText = gameState.getText(action)
+        local actionWidth = labelFont and labelFont:getWidth(actionText) or 0        -- Draw the action label on the left side
         love.graphics.print(
-            gameState.getText(action),
-            virtualWidth * 0.2,
+            actionText,
+            virtualWidth * 0.05,
             actionY + virtualHeight * 0.02
         )
     end
