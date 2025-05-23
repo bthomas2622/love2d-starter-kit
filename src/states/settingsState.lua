@@ -1,5 +1,6 @@
 -- Settings Menu State
 local love = require("love")
+local gameConfig = require("src.constants.gameConfig")
 local Button = require "src.ui.button"
 local Slider = require "src.ui.slider"
 local Dropdown = require "src.ui.dropdown"
@@ -43,18 +44,17 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     local _, _, _, baseWidth, baseHeight = love.getScreenTransform()
     virtualWidth = baseWidth or vWidth  -- Fallback to parameter if function fails
     virtualHeight = baseHeight or vHeight -- Fallback to parameter if function fails
-    currentGuiScale = guiScale
+    currentGuiScale = guiScale    -- Font sized for virtual canvas - main.lua's transform will scale it on screen
+    titleFont = fontManager.getFont(gameConfig.FONTS.SETTINGS_TITLE) -- Base size for virtual canvas    
+    
+    -- Calculate positions on the virtual canvas
+    local centerX = virtualWidth / 2    local startY = virtualHeight * gameConfig.SETTINGS.START_Y_OFFSET
+    local spacing = virtualHeight * gameConfig.SETTINGS.SPACING_OFFSET
 
-    -- Font sized for virtual canvas - main.lua's transform will scale it on screen
-    titleFont = fontManager.getFont(30) -- Base size for virtual canvas    -- Calculate positions on the virtual canvas
-    local centerX = virtualWidth / 2
-    local startY = virtualHeight * 0.14 -- Slightly reduced starting position
-    local spacing = virtualHeight * 0.15 -- Reduced spacing for more compact layout
-
-    local controlWidth = virtualWidth * 0.38 -- Relative width
-    local buttonWidth = virtualWidth * 0.18
-    local buttonHeight = virtualHeight * 0.08
-    local controlHeight = virtualHeight * 0.06
+    local controlWidth = virtualWidth * gameConfig.SETTINGS.CONTROL_WIDTH_RATIO
+    local buttonWidth = virtualWidth * gameConfig.SETTINGS.BUTTON_WIDTH_RATIO
+    local buttonHeight = virtualHeight * gameConfig.SETTINGS.BUTTON_HEIGHT_RATIO
+    local controlHeight = virtualHeight * gameConfig.SETTINGS.CONTROL_HEIGHT_RATIO
 
     buttons = {}
     sliders = {}
@@ -100,11 +100,9 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
            size.height == tempSettings.screenSize.height then
             selectedScreenIndex = i
         end
-    end
-
-    local screenDropdown = Dropdown.new(
+    end    local screenDropdown = Dropdown.new(
         centerX - controlWidth / 2,
-        startY + spacing * 2 - 30,
+        startY + spacing * 2 - gameConfig.SETTINGS.DROPDOWN_Y_OFFSET,
         controlWidth,
         controlHeight,
         screenOptions,
@@ -130,11 +128,9 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         if lang.code == tempSettings.language then
             selectedLangIndex = i
         end
-    end
-
-    local langDropdown = Dropdown.new(
+    end    local langDropdown = Dropdown.new(
         centerX - controlWidth / 2,
-        startY + spacing * 3 - 30,
+        startY + spacing * 3 - gameConfig.SETTINGS.DROPDOWN_Y_OFFSET,
         controlWidth,
         controlHeight,
         languageOptions,
@@ -143,9 +139,11 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         function(index, option)
             tempSettings.language = option.value
         end,
-        currentGuiScale
-    )
-    langDropdown.maxVisibleOptions = 6    table.insert(dropdowns, langDropdown)    -- Controls button - positioned directly below the language dropdown with minimal spacing
+        currentGuiScale    )
+    langDropdown.maxVisibleOptions = gameConfig.SETTINGS.MAX_VISIBLE_DROPDOWN_OPTIONS
+    table.insert(dropdowns, langDropdown)
+    
+    -- Controls button - positioned directly below the language dropdown with minimal spacing
     table.insert(buttons, Button.new(
         centerX - buttonWidth / 2,
         startY + spacing * 3 + controlHeight * 2, -- Reduced spacing between language dropdown and controls button
@@ -156,10 +154,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
             love.switchState("controls")
         end,
         currentGuiScale
-    ))-- Back button (returns to menu without saving)
+    ))    -- Back button (returns to menu without saving)
     table.insert(buttons, Button.new(
         centerX - buttonWidth - 20,
-        virtualHeight - buttonHeight - 20, -- Keep at bottom of screen
+        virtualHeight - buttonHeight - gameConfig.SETTINGS.BOTTOM_BUTTON_MARGIN, -- Keep at bottom of screen
         buttonWidth,
         buttonHeight,
         gameState.getText("back"),
@@ -172,10 +170,10 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     -- Apply button (saves settings and returns to menu)
     table.insert(buttons, Button.new(
         centerX + 20,
-        virtualHeight - buttonHeight - 20, -- Keep at bottom of screen
+        virtualHeight - buttonHeight - gameConfig.SETTINGS.BOTTOM_BUTTON_MARGIN, -- Keep at bottom of screen
         buttonWidth,
         buttonHeight,
-        gameState.getText("apply"),        function()
+        gameState.getText("apply"),function()
             gameState.settings = deepcopy(tempSettings)
             gameState.applySettings()
             soundManager.updateVolumes() -- Update volumes with final settings

@@ -1,5 +1,6 @@
 -- Button class for the menus
 local love = require "love"
+local gameConfig = require "src.constants.gameConfig"
 local fontManager = require "src.utils.fontManager"
 local soundManager = require "src.utils.soundManager"
 
@@ -21,16 +22,14 @@ function Button.new(x, y, width, height, text, callback, guiScale, playSounds)
     self.disabled = false -- Add disabled state
     self.guiScale = guiScale or 1 -- Store the GUI scale for detail scaling
     self.playSounds = playSounds -- If true (default), play sounds on hover/click. If false, no sounds.
-    if self.playSounds == nil then self.playSounds = true end -- Default to true if not specified
-
-    -- Default colors
-    self.normalColor = {0.4, 0.4, 0.5, 1}
-    self.hoverColor = {0.5, 0.5, 0.6, 1}
-    self.disabledColor = {0.3, 0.3, 0.35, 0.7} -- Dimmed color for disabled state
-    self.textColor = {1, 1, 1, 1}
-    self.disabledTextColor = {0.7, 0.7, 0.7, 0.7} -- Dimmed text for disabled state-- Font sized for the virtual canvas (e.g., 16pt for an 800x450 canvas)
+    if self.playSounds == nil then self.playSounds = true end -- Default to true if not specified    -- Default colors
+    self.normalColor = gameConfig.UI.BUTTON.NORMAL_COLOR
+    self.hoverColor = gameConfig.UI.BUTTON.HOVER_COLOR
+    self.disabledColor = gameConfig.UI.BUTTON.DISABLED_COLOR
+    self.textColor = gameConfig.UI.BUTTON.TEXT_COLOR
+    self.disabledTextColor = gameConfig.UI.BUTTON.DISABLED_TEXT_COLOR    -- Font sized for the virtual canvas (e.g., 16pt for an 800x450 canvas)
     -- It will be scaled visually by main.lua's global transform.
-    self.font = fontManager.getFont(16) -- Base font size for virtual canvas
+    self.font = fontManager.getFont(gameConfig.UI.BUTTON.FONT_SIZE) -- Base font size for virtual canvas
     
     -- Track the last update's hover state to only play sound once
     self.lastHoverState = false
@@ -86,10 +85,8 @@ end
 -- Draw the button
 function Button:draw()
     -- self.x, self.y, self.width, self.height are coordinates on the virtual canvas.
-    -- main.lua's transform handles scaling this to the screen.
-
-    local cornerRadius = 8 * self.guiScale -- Scale corner radius based on overall GUI scale
-    local lineWidth = 1 * self.guiScale   -- Scale line width similarly
+    -- main.lua's transform handles scaling this to the screen.    local cornerRadius = gameConfig.UI.BUTTON.CORNER_RADIUS * self.guiScale -- Scale corner radius based on overall GUI scale
+    local lineWidth = gameConfig.UI.BUTTON.BORDER_WIDTH * self.guiScale   -- Scale line width similarly
     if lineWidth < 1 then lineWidth = 1 end -- Ensure line width is at least 1 pixel on screen
 
     -- Draw the button background
@@ -98,10 +95,8 @@ function Button:draw()
     else
         love.graphics.setColor(self.hovered and self.hoverColor or self.normalColor)
     end
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
-
-    -- Draw the button border
-    love.graphics.setColor(self.disabled and {0.5, 0.5, 0.5, 0.5} or {1, 1, 1, 0.8})
+    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)    -- Draw the button border
+    love.graphics.setColor(self.disabled and gameConfig.UI.BUTTON.DISABLED_BORDER_COLOR or gameConfig.UI.BUTTON.BORDER_COLOR)
     love.graphics.setLineWidth(lineWidth)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
     love.graphics.setLineWidth(1) -- Reset line width to default for other drawing operations

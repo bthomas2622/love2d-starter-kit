@@ -1,22 +1,16 @@
 -- Font manager to handle loading and managing fonts
 local love = require("love")
+local gameConfig = require("src.constants.gameConfig")
 local fontManager = {}
 
 -- Font cache
 local fonts = {}
 
 -- Default font file with Unicode support
-local defaultFontPath = "assets/fonts/NotoSans-Regular.ttf"
+local defaultFontPath = gameConfig.FONTS.DEFAULT_FONT
 
 -- Fallback fonts
-local fallbackFontPaths = {
-    "assets/fonts/NotoSansArabic-Regular.ttf",
-    "assets/fonts/NotoSansBengali-Regular.ttf",
-    "assets/fonts/NotoSansJP-Regular.ttf",
-    "assets/fonts/NotoSansKR-Regular.ttf",
-    "assets/fonts/NotoSansSC-Regular.ttf",
-    "assets/fonts/NotoSansDevanagari-Regular.ttf"
-}
+local fallbackFontPaths = gameConfig.FONTS.FALLBACK_FONTS
 local fallbackFonts = {}
 
 -- Initialize the font manager

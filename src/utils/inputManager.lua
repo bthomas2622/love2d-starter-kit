@@ -2,28 +2,12 @@
 local love = require("love")
 local gameState = require "src.states.gameState"
 local soundManager = require "src.utils.soundManager"
+local gameConfig = require("src.constants.gameConfig")
 
 local inputManager = {}
 
 -- Default key bindings
-local defaultKeyBindings = {
-    keyboard = {
-        up = "up",
-        down = "down",
-        left = "left",
-        right = "right",
-        select = "return",
-        back = "escape"
-    },
-    gamepad = {
-        up = "dpup",
-        down = "dpdown",
-        left = "dpleft",
-        right = "dpright",
-        select = "a",
-        back = "b"
-    }
-}
+local defaultKeyBindings = gameConfig.DEFAULT_KEY_BINDINGS
 
 -- Current key bindings - will be loaded from settings
 inputManager.keyBindings = {
@@ -36,7 +20,7 @@ local lastKeyboardState = {}
 local lastGamepadState = {}
 local currentGamepad = nil
 local lastMenuAction = 0
-local menuRepeatDelay = 0.2 -- Time in seconds before menu navigation repeats when holding a direction
+local menuRepeatDelay = gameConfig.INPUT.MENU_REPEAT_DELAY -- Time in seconds before menu navigation repeats when holding a direction
 
 -- Initialize input manager
 function inputManager.init()
@@ -121,15 +105,14 @@ function inputManager.isActionJustPressed(action)
             -- Handle different types of gamepad inputs
             if gamepadBinding:sub(1, 2) == "dp" then
                 -- D-pad buttons
-                isDown = currentGamepad:isGamepadDown(gamepadBinding)
-            elseif gamepadBinding == "leftstick_up" then
-                isDown = currentGamepad:getGamepadAxis("lefty") < -0.5
+                isDown = currentGamepad:isGamepadDown(gamepadBinding)            elseif gamepadBinding == "leftstick_up" then
+                isDown = currentGamepad:getGamepadAxis("lefty") < -gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_down" then
-                isDown = currentGamepad:getGamepadAxis("lefty") > 0.5
+                isDown = currentGamepad:getGamepadAxis("lefty") > gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_left" then
-                isDown = currentGamepad:getGamepadAxis("leftx") < -0.5
+                isDown = currentGamepad:getGamepadAxis("leftx") < -gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_right" then
-                isDown = currentGamepad:getGamepadAxis("leftx") > 0.5
+                isDown = currentGamepad:getGamepadAxis("leftx") > gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             else
                 -- Regular buttons
                 isDown = currentGamepad:isGamepadDown(gamepadBinding)
@@ -163,15 +146,14 @@ function inputManager.isActionPressedForMenu(action)
         if gamepadBinding then
             -- Handle different types of gamepad inputs
             if gamepadBinding:sub(1, 2) == "dp" then
-                isPressed = currentGamepad:isGamepadDown(gamepadBinding)
-            elseif gamepadBinding == "leftstick_up" then
-                isPressed = currentGamepad:getGamepadAxis("lefty") < -0.5
+                isPressed = currentGamepad:isGamepadDown(gamepadBinding)            elseif gamepadBinding == "leftstick_up" then
+                isPressed = currentGamepad:getGamepadAxis("lefty") < -gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_down" then
-                isPressed = currentGamepad:getGamepadAxis("lefty") > 0.5
+                isPressed = currentGamepad:getGamepadAxis("lefty") > gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_left" then
-                isPressed = currentGamepad:getGamepadAxis("leftx") < -0.5
+                isPressed = currentGamepad:getGamepadAxis("leftx") < -gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             elseif gamepadBinding == "leftstick_right" then
-                isPressed = currentGamepad:getGamepadAxis("leftx") > 0.5
+                isPressed = currentGamepad:getGamepadAxis("leftx") > gameConfig.INPUT.GAMEPAD_AXIS_THRESHOLD
             else
                 isPressed = currentGamepad:isGamepadDown(gamepadBinding)
             end

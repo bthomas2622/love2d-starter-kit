@@ -2,6 +2,7 @@
 local love = require("love")
 local fontManager = require "src.utils.fontManager"
 local soundManager = require "src.utils.soundManager"
+local gameConfig = require("src.constants.gameConfig")
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
@@ -24,20 +25,18 @@ function Dropdown.new(x, y, width, height, options, selectedIndex, label, onChan
     self.x = self.baseX
     self.y = self.baseY
     self.width = self.baseWidth
-    self.height = self.baseHeight
-
-    -- Scrolling support
+    self.height = self.baseHeight    -- Scrolling support
     self.scrollOffset = 0
-    self.maxVisibleOptions = 10
+    self.maxVisibleOptions = gameConfig.UI.DROPDOWN.MAX_VISIBLE_OPTIONS
 
     -- Colors
-    self.backgroundColor = {0.4, 0.4, 0.5, 1}
-    self.hoverColor = {0.5, 0.5, 0.6, 1}
-    self.textColor = {1, 1, 1, 1}
+    self.backgroundColor = gameConfig.UI.DROPDOWN.BACKGROUND_COLOR
+    self.hoverColor = gameConfig.UI.DROPDOWN.HOVER_COLOR
+    self.textColor = gameConfig.UI.DROPDOWN.TEXT_COLOR
     self.hoveredOption = nil
     -- Use fixed font sizes for the virtual canvas - scaling is handled by Love's transform
-    self.font = fontManager.getFont(16) -- Standard font size
-    self.labelFont = fontManager.getFont(14) -- Slightly smaller for label
+    self.font = fontManager.getFont(gameConfig.UI.DROPDOWN.FONT_SIZE) -- Standard font size
+    self.labelFont = fontManager.getFont(gameConfig.UI.DROPDOWN.LABEL_FONT_SIZE) -- Slightly smaller for label
     self.lastHoveredOption = nil -- Track to play sound on hover change
     
     -- Track main dropdown hover state (for when dropdown is closed)
@@ -171,13 +170,13 @@ function Dropdown:click(x, y)
     return self:mousepressed(x, y)
 end
 
-function Dropdown:update(dt, scale) -- Receive current overall scale
+function Dropdown:update(dt, scale) -- Receive current overall scalefunction Dropdown:update(dt, scale) -- Receive current overall scale
     if scale and self.currentScale ~= scale then
         self.currentScale = scale
     -- Use fixed font sizes for the virtual canvas, don't multiply by scale
         -- The Love2D transform will handle the scaling
-        self.font = fontManager.getFont(16)
-        self.labelFont = fontManager.getFont(14)
+        self.font = fontManager.getFont(gameConfig.UI.DROPDOWN.FONT_SIZE)
+        self.labelFont = fontManager.getFont(gameConfig.UI.DROPDOWN.LABEL_FONT_SIZE)
         -- Maintain internal scale for detail elements that need additional scaling
     end
 

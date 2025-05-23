@@ -1,6 +1,7 @@
 -- filepath: c:\Users\Ben\Documents\LoveProjects\love2d-starter-kit\src\states\controlsState.lua
 -- Controls Settings State
 local love = require("love")
+local gameConfig = require("src.constants.gameConfig")
 local Button = require "src.ui.button"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
@@ -63,25 +64,23 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
     local _, _, _, baseWidth, baseHeight = love.getScreenTransform()
     virtualWidth = baseWidth or vWidth
     virtualHeight = baseHeight or vHeight
-    currentGuiScale = guiScale
-
-    titleFont = fontManager.getFont(30)
-    labelFont = fontManager.getFont(16)
+    currentGuiScale = guiScale    titleFont = fontManager.getFont(gameConfig.FONTS.CONTROLS_TITLE)
+    labelFont = fontManager.getFont(gameConfig.FONTS.LABEL)
 
     local centerX = virtualWidth / 2
-    local startY = virtualHeight * 0.15
-    local spacing = virtualHeight * 0.07
+    local startY = virtualHeight * gameConfig.CONTROLS.START_Y_OFFSET
+    local spacing = virtualHeight * gameConfig.CONTROLS.SPACING_OFFSET
     
     -- Clear existing buttons
     buttons = {}
     controlButtons = {}
-    
-    -- Title area - spans both columns
-    local columnWidth = virtualWidth * 0.35
-    local buttonWidth = virtualWidth * 0.15
-    local buttonHeight = virtualHeight * 0.06
-      -- Create keyboard controls column
-    local keyboardX = centerX - columnWidth + 200  -- Changed from -20 to +60 to move closer to the center
+      -- Title area - spans both columns
+    local columnWidth = virtualWidth * gameConfig.CONTROLS.COLUMN_WIDTH_RATIO
+    local buttonWidth = virtualWidth * gameConfig.CONTROLS.BUTTON_WIDTH_RATIO
+    local buttonHeight = virtualHeight * gameConfig.CONTROLS.BUTTON_HEIGHT_RATIO
+      
+    -- Create keyboard controls column
+    local keyboardX = centerX - columnWidth + gameConfig.CONTROLS.KEYBOARD_X_OFFSET
     for i, action in ipairs(bindableActions) do
         -- Create button for rebinding
         local buttonY = startY + spacing * i
@@ -104,9 +103,8 @@ local function recalculateLayout(vWidth, vHeight, guiScale, guiOffsetX, guiOffse
         keyBtn.deviceType = "keyboard"
         table.insert(controlButtons, keyBtn)
     end
-    
-    -- Create gamepad controls column
-    local gamepadX = centerX + 20
+      -- Create gamepad controls column
+    local gamepadX = centerX + gameConfig.CONTROLS.GAMEPAD_X_OFFSET
     for i, action in ipairs(bindableActions) do
         -- Create button for rebinding
         local buttonY = startY + spacing * i
@@ -296,8 +294,7 @@ function controlsState.update(dt, guiScale)
     end
 end
 
-function controlsState.draw()
-    -- Draw title
+function controlsState.draw()    -- Draw title
     love.graphics.setFont(titleFont)
     local title = gameState.getText("controls")
     local titleWidth = titleFont and titleFont:getWidth(title) or 0
@@ -306,25 +303,25 @@ function controlsState.draw()
     love.graphics.print(
         title,
         virtualWidth / 2 - titleWidth / 2,
-        virtualHeight * 0.05
+        virtualHeight * gameConfig.CONTROLS.TITLE_Y_OFFSET
     )
     
     -- Draw section headers
     love.graphics.setFont(labelFont)
     
     local centerX = virtualWidth / 2
-    local columnWidth = virtualWidth * 0.35
+    local columnWidth = virtualWidth * gameConfig.CONTROLS.COLUMN_WIDTH_RATIO
     
     love.graphics.print(
         gameState.getText("keyboard"),
-        centerX - columnWidth + 200,
-        virtualHeight * 0.12
+        centerX - columnWidth + gameConfig.CONTROLS.KEYBOARD_X_OFFSET,
+        virtualHeight * gameConfig.CONTROLS.HEADER_Y_OFFSET
     )
     
     love.graphics.print(
         gameState.getText("gamepad"),
-        centerX + 20,
-        virtualHeight * 0.12
+        centerX + gameConfig.CONTROLS.GAMEPAD_X_OFFSET,
+        virtualHeight * gameConfig.CONTROLS.HEADER_Y_OFFSET
     )    -- Draw action labels
     local startY = virtualHeight * 0.15
     local spacing = virtualHeight * 0.07
@@ -364,12 +361,11 @@ function controlsState.draw()
     if waitingForInput then
         -- Ensure we have a valid GUI scale for the modal dialog
         currentGuiScale = currentGuiScale or 1
-        
-        love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.rectangle("fill", virtualWidth * 0.3, virtualHeight * 0.4, virtualWidth * 0.4, virtualHeight * 0.2)
+          love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.rectangle("fill", virtualWidth * gameConfig.CONTROLS.MODAL_X_RATIO, virtualHeight * gameConfig.CONTROLS.MODAL_Y_RATIO, virtualWidth * gameConfig.CONTROLS.MODAL_WIDTH_RATIO, virtualHeight * gameConfig.CONTROLS.MODAL_HEIGHT_RATIO)
         
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.rectangle("line", virtualWidth * 0.3, virtualHeight * 0.4, virtualWidth * 0.4, virtualHeight * 0.2)
+        love.graphics.rectangle("line", virtualWidth * gameConfig.CONTROLS.MODAL_X_RATIO, virtualHeight * gameConfig.CONTROLS.MODAL_Y_RATIO, virtualWidth * gameConfig.CONTROLS.MODAL_WIDTH_RATIO, virtualHeight * gameConfig.CONTROLS.MODAL_HEIGHT_RATIO)
         
         love.graphics.setFont(titleFont)
         local promptText = "Press any key..."

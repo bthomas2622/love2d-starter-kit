@@ -1,5 +1,6 @@
 -- Snake Game Play State
 local love = require("love")
+local gameConfig = require("src.constants.gameConfig")
 local Button = require "src.ui.button"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
@@ -8,14 +9,14 @@ local inputManager = require "src.utils.inputManager"
 
 local playState = {}
 
--- Game configuration
-local GRID_SIZE = 40 -- Size of each grid cell in pixels (doubled from 20 to make snake/fruit 2x larger)
+-- Game configuration (now using centralized constants)
+local GRID_SIZE = gameConfig.SNAKE.GRID_SIZE
 local GRID_WIDTH = nil -- Will be calculated based on screen width
 local GRID_HEIGHT = nil -- Will be calculated based on screen height
-local BASE_GAME_SPEED = 0.15 -- Base time (in seconds) between snake movements
-local SPEED_INCREASE = 0.005 -- How much to decrease the delay per fruit eaten
-local MIN_SPEED = 0.05 -- Minimum speed delay (maximum speed)
-local INITIAL_LENGTH = 2 -- Initial snake body length (excluding head)
+local BASE_GAME_SPEED = gameConfig.SNAKE.BASE_GAME_SPEED
+local SPEED_INCREASE = gameConfig.SNAKE.SPEED_INCREASE
+local MIN_SPEED = gameConfig.SNAKE.MIN_SPEED
+local INITIAL_LENGTH = gameConfig.SNAKE.INITIAL_LENGTH
 
 -- Game state variables
 local buttons = {}
@@ -39,8 +40,8 @@ local gameSpeed = BASE_GAME_SPEED -- Current game speed (gets faster as score in
 local currentScale = 1
 local currentOffsetX = 0
 local currentOffsetY = 0
-local baseScreenWidth = 1280
-local baseScreenHeight = 720
+local baseScreenWidth = gameConfig.VIRTUAL_WIDTH
+local baseScreenHeight = gameConfig.VIRTUAL_HEIGHT
 
 -- Forward declarations
 local spawnFruit
@@ -200,11 +201,10 @@ local function recalculateLayout(w, h, scale, offsetX, offsetY)
     -- Calculate grid dimensions based on screen size
     GRID_WIDTH = math.floor(baseScreenWidth / GRID_SIZE)
     GRID_HEIGHT = math.floor(baseScreenHeight / GRID_SIZE)
-    
-    -- Load fonts
+      -- Load fonts
     if fontManager then
-        scoreFont = fontManager.getFont(24) -- Font for score display
-        messageFont = fontManager.getFont(36) -- Font for game over message
+        scoreFont = fontManager.getFont(gameConfig.FONTS.SCORE) -- Font for score display
+        messageFont = fontManager.getFont(gameConfig.FONTS.MESSAGE) -- Font for game over message
     end
 
     buttons = {} -- Initialize empty buttons table but don't add the back button

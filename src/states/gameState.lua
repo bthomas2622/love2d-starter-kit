@@ -1,27 +1,14 @@
 -- Game state management
 local love = require("love")
+local gameConfig = require("src.constants.gameConfig")
 local localization = require("src.utils.localization")
 local gameState = {}
 
 -- Default settings
-gameState.settings = {
-    musicVolume = 0.7,
-    effectsVolume = 0.8,
-    screenSize = {
-        width = 1280,
-        height = 720
-    },
-    language = "en"  -- Default language: English
-}
+gameState.settings = gameConfig.DEFAULT_SETTINGS
 
 -- Screen sizes available in settings
-gameState.screenSizes = {
-    {width = 800, height = 600, label = "800x600"},
-    {width = 1024, height = 768, label = "1024x768"},
-    {width = 1280, height = 720, label = "1280x720 (720p)"},
-    {width = 1920, height = 1080, label = "1920x1080 (1080p)"},
-    {width = 3840, height = 2160, label = "3840x2160 (4K)"}
-}
+gameState.screenSizes = gameConfig.SCREEN_SIZES
 
 -- Get a formatted list of available languages for UI
 function gameState.getAvailableLanguages()

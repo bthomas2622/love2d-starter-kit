@@ -2,6 +2,7 @@
 local love = require("love")
 local fontManager = require "src.utils.fontManager"
 local soundManager = require "src.utils.soundManager"
+local gameConfig = require("src.constants.gameConfig")
 
 local Slider = {}
 Slider.__index = Slider
@@ -20,15 +21,13 @@ function Slider.new(x, y, width, height, min, max, value, label, onChange, guiSc
     self.guiScale = guiScale or 1
     self.lastValue = value -- To track value changes for sound effects
     self.hovered = false -- Track if the mouse is hovering over the slider
-    self.lastHoverState = false -- Track previous hover state to detect changes
-
-    -- Colors
-    self.barColor = {0.4, 0.4, 0.5, 1}
-    self.handleColor = {0.8, 0.8, 0.9, 1}
-    self.textColor = {1, 1, 1, 1}
+    self.lastHoverState = false -- Track previous hover state to detect changes    -- Colors
+    self.barColor = gameConfig.UI.SLIDER.BAR_COLOR
+    self.handleColor = gameConfig.UI.SLIDER.HANDLE_COLOR
+    self.textColor = gameConfig.UI.SLIDER.TEXT_COLOR
 
     -- Font sized for the virtual canvas
-    self.font = fontManager.getFont(16)
+    self.font = fontManager.getFont(gameConfig.UI.SLIDER.FONT_SIZE)
 
     return self
 end
@@ -58,9 +57,8 @@ function Slider:click(x, y)
 end
 
 -- Handle mouse press
-function Slider:mousepressed(x, y)
-    -- x and y are already in virtual canvas coordinates
-    local sliderArea = 20 -- Extra clickable area around slider to make it easier to grab
+function Slider:mousepressed(x, y)    -- x and y are already in virtual canvas coordinates
+    local sliderArea = gameConfig.UI.SLIDER.CLICK_AREA_PADDING -- Extra clickable area around slider to make it easier to grab
     if x >= self.x - sliderArea and x <= self.x + self.width + sliderArea and
        y >= self.y - sliderArea and y <= self.y + self.height + sliderArea then
         self.dragging = true
@@ -98,9 +96,8 @@ function Slider:update(dt, guiScale)
     if scale and scale ~= 0 then -- Prevent division by zero
         local mx = (rawMouseX - offsetX) / scale
         local my = (rawMouseY - offsetY) / scale
-        
-        -- Check if mouse is hovering over the slider
-        local sliderArea = 20 -- Extra area around slider to make it easier to detect
+          -- Check if mouse is hovering over the slider
+        local sliderArea = gameConfig.UI.SLIDER.CLICK_AREA_PADDING -- Extra area around slider to make it easier to detect
         local currentlyHovered = mx >= self.x - sliderArea and mx <= self.x + self.width + sliderArea and
                                my >= self.y - sliderArea and my <= self.y + self.height + sliderArea
         
@@ -124,35 +121,32 @@ end
 function Slider:draw()
     -- Use font sized for virtual canvas
     love.graphics.setFont(self.font)
-    
-    -- Draw the label
+      -- Draw the label
     love.graphics.setColor(self.textColor)
-    love.graphics.print(self.label, self.x, self.y - self.font:getHeight() - 5)
+    love.graphics.print(self.label, self.x, self.y - self.font:getHeight() - gameConfig.UI.SLIDER.LABEL_Y_OFFSET)
     
     -- Calculate scaled visual properties
-    local cornerRadius = 4 * self.guiScale
-    local handleWidth = 10 * self.guiScale
-    local handleHeight = self.height + 4
+    local cornerRadius = gameConfig.UI.SLIDER.CORNER_RADIUS_SCALE * self.guiScale
+    local handleWidth = gameConfig.UI.SLIDER.HANDLE_WIDTH_SCALE * self.guiScale
+    local handleHeight = self.height + gameConfig.UI.SLIDER.HANDLE_HEIGHT_OFFSET
 
     -- Draw the bar background
     love.graphics.setColor(self.barColor)
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
-    
-    -- Draw the filled part
-    love.graphics.setColor(0.6, 0.6, 0.7, 1)
+      -- Draw the filled part
+    love.graphics.setColor(gameConfig.UI.SLIDER.FILL_COLOR)
     local fillWidth = self.width * self:getPosition()
     love.graphics.rectangle("fill", self.x, self.y, fillWidth, self.height, cornerRadius, cornerRadius)
     
     -- Draw the border
-    love.graphics.setColor(1, 1, 1, 0.8)
+    love.graphics.setColor(gameConfig.UI.SLIDER.BORDER_COLOR)
     love.graphics.setLineWidth(1 * self.guiScale)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
     love.graphics.setLineWidth(1) -- Reset line width
-    
-    -- Draw the handle
+      -- Draw the handle
     love.graphics.setColor(self.handleColor)
     local handleX = self.x + self.width * self:getPosition() - (handleWidth / 2)
-    love.graphics.rectangle("fill", handleX, self.y - 2, handleWidth, handleHeight, 3, 3)
+    love.graphics.rectangle("fill", handleX, self.y - 2, handleWidth, handleHeight, gameConfig.UI.SLIDER.HANDLE_CORNER_RADIUS, gameConfig.UI.SLIDER.HANDLE_CORNER_RADIUS)
     
     -- Draw the value text (as a percentage)
     local percent = math.floor(self:getPosition() * 100)

@@ -1,5 +1,6 @@
 -- Main entry point for our Love2D game
 local love = require("love")
+local gameConfig = require "src.constants.gameConfig"
 local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
 local soundManager = require "src.utils.soundManager"
@@ -9,9 +10,9 @@ local currentState = nil
 local states = {}
 
 -- Screen and scaling variables
-local targetAspectRatio = 16 / 9
-local baseWidth = 1280 -- This is our fixed virtual width for the 16:9 canvas (720p)
-local baseHeight = baseWidth / targetAspectRatio -- This is our fixed virtual height (720)
+local targetAspectRatio = gameConfig.TARGET_ASPECT_RATIO
+local baseWidth = gameConfig.VIRTUAL_WIDTH
+local baseHeight = gameConfig.VIRTUAL_HEIGHT
 
 local scale = 1
 local offsetX = 0
@@ -47,7 +48,7 @@ local updateScreenTransform = love.updateScreenTransform
 
 
 function love.load()
-    love.window.setTitle("My Love2D Game")
+    love.window.setTitle(gameConfig.WINDOW.TITLE)
     
     -- Initialize with the user's stored settings if available
     gameState.load()
@@ -56,7 +57,10 @@ function love.load()
     love.window.setMode(
         gameState.settings.screenSize.width, 
         gameState.settings.screenSize.height, 
-        {resizable=true, minwidth=400, minheight=300}    )    fontManager.init()
+        {resizable=gameConfig.WINDOW.RESIZABLE, minwidth=gameConfig.WINDOW.MIN_WIDTH, minheight=gameConfig.WINDOW.MIN_HEIGHT}
+    )
+    
+    fontManager.init()
     soundManager.load()
 
     states.menu = require "src.states.menuState"

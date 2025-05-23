@@ -1,6 +1,7 @@
 -- Sound Manager Module
 local love = require("love")
 local gameState = require "src.states.gameState"
+local gameConfig = require("src.constants.gameConfig")
 
 local soundManager = {}
 
@@ -14,13 +15,13 @@ local currentMusic = nil
 -- Load all sound assets
 function soundManager.load()
     -- Load music
-    music.menu = love.audio.newSource("assets/music/MenuMusic.ogg", "stream")
+    music.menu = love.audio.newSource(gameConfig.AUDIO.MENU_MUSIC, "stream")
     music.menu:setLooping(true)
     
     -- Load sound effects
-    sounds.menuSelect = love.audio.newSource("assets/sounds/MenuSelect.ogg", "static")
-    sounds.menuMove = love.audio.newSource("assets/sounds/MenuMove.ogg", "static")
-    sounds.menuBack = love.audio.newSource("assets/sounds/MenuBack.ogg", "static")
+    sounds.menuSelect = love.audio.newSource(gameConfig.AUDIO.SOUNDS.MENU_SELECT, "static")
+    sounds.menuMove = love.audio.newSource(gameConfig.AUDIO.SOUNDS.MENU_MOVE, "static")
+    sounds.menuBack = love.audio.newSource(gameConfig.AUDIO.SOUNDS.MENU_BACK, "static")
     
     -- Snake game sounds
     if love.filesystem.getInfo("assets/sounds/FruitEat.ogg") then
