@@ -1,6 +1,3 @@
----
-applyTo: '**'
----
 # Love2D Project: Best Practices for AI Coding Agents
 
 This guide provides best practices for AI coding agents working with this Love2D game engine project. Adhering to these guidelines will help ensure that code modifications and additions are consistent, correct, and leverage the existing project structure.

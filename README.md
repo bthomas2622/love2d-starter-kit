@@ -36,9 +36,9 @@ This is a simple Love2D game template with a complete menu system including:
   - `ui/` - Contains reusable UI components
     - `button.lua` - Reusable button component
     - `slider.lua` - Reusable slider component for volume controls
-    - `dropdown.lua` - Reusable dropdown component for selections
-  - `utils/` - Utility functions and helpers
+    - `dropdown.lua` - Reusable dropdown component for selections  - `utils/` - Utility functions and helpers
     - `fontManager.lua` - Font loading and management
+    - `localization.lua` - Multi-language localization system
     - `updateGameSettings.lua` - Utility for updating game settings
   - `entities/` - Game entities and objects (empty - for future use)
   - `systems/` - Game systems like physics, audio, etc. (empty - for future use)
@@ -49,6 +49,47 @@ This is a simple Love2D game template with a complete menu system including:
   - `images/` - Image and sprite files (empty - for future use)
   - `shaders/` - GLSL shader files (empty - for future use)
   - `maps/` - Level and map data (empty - for future use)
+
+## Localization System
+
+The game includes a comprehensive multi-language localization system with support for 13 languages:
+
+### Supported Languages
+- **English** (`en`) - Default language
+- **中文 Chinese** (`zh`) - Simplified Chinese
+- **हिन्दी Hindi** (`hi`) - Hindi
+- **Español Spanish** (`es`) - Spanish
+- **Français French** (`fr`) - French  
+- **العربية Arabic** (`ar`) - Arabic (RTL support)
+- **বাংলা Bengali** (`bn`) - Bengali
+- **Português Portuguese** (`pt`) - Portuguese
+- **Русский Russian** (`ru`) - Russian
+- **日本語 Japanese** (`ja`) - Japanese
+- **한국어 Korean** (`ko`) - Korean
+- **Deutsch German** (`de`) - German
+- **Polski Polish** (`pl`) - Polish
+
+### Localization Features
+- **Complete translations** - All UI text is translated for every supported language
+- **RTL support** - Right-to-left text rendering for Arabic
+- **Dynamic language switching** - Change language in settings without restart
+- **Fallback system** - Falls back to English if a translation is missing
+- **Validation system** - Built-in validation to ensure translation completeness
+
+### Usage
+```lua
+-- Get localized text (uses current language setting)
+local playText = gameState.getText("play")
+
+-- Direct access to localization module
+local localization = require("src.utils.localization")
+local playText = localization.getText("play", "es") -- Spanish
+```
+
+### Adding New Languages
+1. Add the language code and translations to `src/utils/localization.lua`
+2. Add the language to the `getAvailableLanguages()` function
+3. Use `localization.validateTranslations()` to check completeness
 
 ## Extending the Game
 
