@@ -532,10 +532,7 @@ function playState.keypressed(key)
     end
     
     -- Toggle pause or return to menu
-    if key == "p" then
-        paused = not paused
-        return
-    elseif key == inputManager.keyBindings.keyboard.back then
+    if key == inputManager.keyBindings.keyboard.back then
         -- Return to menu when escape/back is pressed
         if paused then
             soundManager.playSound("menuBack")
@@ -546,7 +543,7 @@ function playState.keypressed(key)
         end
         return
     end
-    
+
     if paused then
         return
     end

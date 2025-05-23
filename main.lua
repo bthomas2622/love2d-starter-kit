@@ -145,12 +145,6 @@ end
 local currentStateName = "menu"
 
 function love.keypressed(key)
-    if key == "escape" and currentStateName == "play" then
-        -- Special handling for escape key in play state (pause game)
-        love.switchState("menu")
-        return
-    end
-    
     if currentState and currentState.keypressed then
         currentState.keypressed(key)
     end

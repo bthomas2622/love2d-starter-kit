@@ -95,10 +95,10 @@ function Button:draw()
     else
         love.graphics.setColor(self.hovered and self.hoverColor or self.normalColor)
     end
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)    -- Draw the button border
+    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height, gameConfig.UI.BUTTON.CORNER_RADIUS * self.guiScale, gameConfig.UI.BUTTON.CORNER_RADIUS * self.guiScale)    -- Draw the button border
     love.graphics.setColor(self.disabled and gameConfig.UI.BUTTON.DISABLED_BORDER_COLOR or gameConfig.UI.BUTTON.BORDER_COLOR)
     love.graphics.setLineWidth(lineWidth)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height, cornerRadius, cornerRadius)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height, gameConfig.UI.BUTTON.CORNER_RADIUS * self.guiScale, gameConfig.UI.BUTTON.CORNER_RADIUS * self.guiScale)
     love.graphics.setLineWidth(1) -- Reset line width to default for other drawing operations
 
     -- Draw the text
