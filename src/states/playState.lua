@@ -516,66 +516,44 @@ function playState.mousepressed(x, y, button)
     end
 end
 
--- Handle keyboard input
-function playState.keypressed(key)
-    -- Restart game when game over
-    if gameOver then
-        -- Check if the pressed key matches the select binding for keyboard
-        if key == inputManager.keyBindings.keyboard.select then
-            initGame()
-        elseif key == inputManager.keyBindings.keyboard.back then
-            -- Return to menu when escape/back is pressed on game over screen
-            soundManager.playSound("menuBack")
-            love.switchState("menu")
+-- Consolidated input handling logic
+local function handleInput(inputType, inputValue)
+    -- Verify inputManager exists
+    if not inputManager then
+        return
+    end
+    
+    -- Determine which action was triggered based on input type
+    local actionTriggered = nil
+    
+    if inputType == "keyboard" then
+        -- Find which action corresponds to this key
+        for action, key in pairs(inputManager.keyBindings.keyboard) do
+            if key == inputValue then
+                actionTriggered = action
+                break
+            end
         end
-        return
-    end
-    
-    -- Toggle pause or return to menu
-    if key == inputManager.keyBindings.keyboard.back then
-        -- Return to menu when escape/back is pressed
-        if paused then
-            soundManager.playSound("menuBack")
-            love.switchState("menu")
-        else
-            -- First pause the game
-            paused = true
+    elseif inputType == "gamepad" then
+        -- Find which action corresponds to this button
+        for action, button in pairs(inputManager.keyBindings.gamepad) do
+            if button == inputValue then
+                actionTriggered = action
+                break
+            end
         end
-        return
-    end
-
-    if paused then
-        return
     end
     
-    -- Direction controls (prevent 180-degree turns)
-    -- Use the configured keyboard bindings from inputManager
-    if key == inputManager.keyBindings.keyboard.up and direction ~= "down" then
-        nextDirection = "up"
-    elseif key == inputManager.keyBindings.keyboard.down and direction ~= "up" then
-        nextDirection = "down"
-    elseif key == inputManager.keyBindings.keyboard.left and direction ~= "right" then
-        nextDirection = "left"
-    elseif key == inputManager.keyBindings.keyboard.right and direction ~= "left" then
-        nextDirection = "right"
-    end
-end
-
--- Handle gamepad input
-function playState.gamepadpressed(joystick, button)
-    -- Verify inputManager and its properties exist
-    if not (inputManager and inputManager.keyBindings and inputManager.keyBindings.gamepad) then
+    -- If no action was found, return early
+    if not actionTriggered then
         return
     end
     
-    -- Check button mappings from inputManager
-    local gb = inputManager.keyBindings.gamepad
-    
-    -- Restart game when game over
+    -- Handle the action based on game state
     if gameOver then
-        if button == gb.select then
+        if actionTriggered == "select" then
             initGame()
-        elseif button == gb.back then
+        elseif actionTriggered == "back" then
             -- Return to menu when back is pressed on game over screen
             soundManager.playSound("menuBack")
             love.switchState("menu")
@@ -584,7 +562,7 @@ function playState.gamepadpressed(joystick, button)
     end
     
     -- Toggle pause or return to menu
-    if button == gb.back then
+    if actionTriggered == "back" then
         if paused then
             -- Return to menu when back is pressed while paused
             soundManager.playSound("menuBack")
@@ -601,15 +579,25 @@ function playState.gamepadpressed(joystick, button)
     end
     
     -- Direction controls (prevent 180-degree turns)
-    if button == gb.up and direction ~= "down" then
+    if actionTriggered == "up" and direction ~= "down" then
         nextDirection = "up"
-    elseif button == gb.down and direction ~= "up" then
+    elseif actionTriggered == "down" and direction ~= "up" then
         nextDirection = "down"
-    elseif button == gb.left and direction ~= "right" then
+    elseif actionTriggered == "left" and direction ~= "right" then
         nextDirection = "left"
-    elseif button == gb.right and direction ~= "left" then
+    elseif actionTriggered == "right" and direction ~= "left" then
         nextDirection = "right"
     end
+end
+
+-- Handle keyboard input
+function playState.keypressed(key)
+    handleInput("keyboard", key)
+end
+
+-- Handle gamepad input
+function playState.gamepadpressed(joystick, button)
+    handleInput("gamepad", button)
 end
 
 return playState
