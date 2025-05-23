@@ -1,21 +1,37 @@
-# Love2D Game with Menu System
+# Love2D Starter Kit with Complete Menu System
 
-This is a simple Love2D game template with a complete menu system including:
+This is a fully functional Love2D Starter Kit with a complete menu system and game framework including:
 - Main Menu
-- Settings Menu
-- Play State
+- Settings Menu  
+- Controls Menu
+- Playable Snake Game
 
 ## Features
 
+### Menu System
 - Main menu with "Play", "Settings", and "Quit" buttons
 - Settings menu with:
   - Music volume control
   - Effects volume control
   - Screen size options
-  - Language selection (English, Spanish, French)
+  - Language selection (13 supported languages)
+- Controls menu with full input customization:
+  - Keyboard and gamepad support
+  - Customizable key bindings for all actions
+  - Reset to defaults option
 - Persistent settings using Love2D's save/load system
 - State management system
 - Reusable UI components (buttons, sliders, dropdowns)
+
+### Sample Snake Game
+- Classic Snake gameplay with modern enhancements
+- Dynamic grid-based movement system
+- Collision detection (walls and self-collision)
+- Progressive difficulty - game speeds up as you score
+- Visual sprite-based graphics for snake segments and fruit
+- Sound effects for fruit eating and menu interactions
+- Score tracking with real-time display
+- Game over detection and restart functionality
 
 ## How to Run
 
@@ -32,21 +48,28 @@ This is a simple Love2D game template with a complete menu system including:
     - `gameState.lua` - Manages game settings and localization
     - `menuState.lua` - Main menu implementation
     - `settingsState.lua` - Settings menu implementation
-    - `playState.lua` - A simple placeholder for the actual game
+    - `controlsState.lua` - Controls/input settings menu
+    - `playState.lua` - Complete Snake game implementation
   - `ui/` - Contains reusable UI components
     - `button.lua` - Reusable button component
     - `slider.lua` - Reusable slider component for volume controls
-    - `dropdown.lua` - Reusable dropdown component for selections  - `utils/` - Utility functions and helpers
+    - `dropdown.lua` - Reusable dropdown component for selections
+  - `utils/` - Utility functions and helpers
     - `fontManager.lua` - Font loading and management
     - `localization.lua` - Multi-language localization system
+    - `soundManager.lua` - Audio management and playback
+    - `inputManager.lua` - Input handling (keyboard/gamepad)
     - `updateGameSettings.lua` - Utility for updating game settings
-  - `entities/` - Game entities and objects (empty - for future use)
-  - `systems/` - Game systems like physics, audio, etc. (empty - for future use)
-  - `constants/` - Game constants and configuration (empty - for future use)
+    - `json.lua` - JSON parsing utilities
+  - `entities/` - Game entities and objects (available for expansion)
+  - `systems/` - Game systems like physics, audio, etc. (available for expansion)
+  - `constants/` - Game constants and configuration
+    - `gameConfig.lua` - Centralized game configuration constants
 - `assets/` - Contains game assets
-  - `fonts/` - Font files
-  - `sounds/` - Audio files
-  - `images/` - Image and sprite files (empty - for future use)
+  - `fonts/` - Font files (including multi-language support)
+  - `sounds/` - Audio files (menu sounds)
+  - `music/` - Background music files
+  - `images/` - Game sprites (snake segments, fruit)
   - `shaders/` - GLSL shader files (empty - for future use)
   - `maps/` - Level and map data (empty - for future use)
 
@@ -91,13 +114,87 @@ local playText = localization.getText("play", "es") -- Spanish
 2. Add the language to the `getAvailableLanguages()` function
 3. Use `localization.validateTranslations()` to check completeness
 
+## Input System
+
+The game includes a comprehensive input management system with full customization support:
+
+### Supported Input Methods
+- **Keyboard** - Full QWERTY support with customizable bindings
+- **Gamepad** - Xbox/PlayStation controller support with analog and button inputs
+- **Hybrid Support** - Use keyboard and gamepad simultaneously
+
+### Input Features
+- **Action-based system** - Map multiple keys/buttons to single actions
+- **Real-time remapping** - Change controls without restarting
+- **Conflict prevention** - Prevents duplicate key assignments
+- **Input validation** - Ensures all controls remain functional
+- **Default restoration** - Reset to default bindings option
+
+### Available Actions
+- **Movement**: Up, Down, Left, Right (for game and menu navigation)
+- **Menu**: Select, Back (for menu interactions)
+- **Game**: All movement actions work in-game for Snake control
+
+### Usage
+```lua
+-- Check for action input (handles both keyboard and gamepad)
+if inputManager.isActionJustPressed("select") then
+    -- Handle select action
+end
+
+-- Access input manager for custom controls
+local inputManager = require("src.utils.inputManager")
+```
+
+## Audio System
+
+The game includes a complete audio management system:
+
+### Features
+- **Music Management** - Background music with volume control
+- **Sound Effects** - Menu sounds and game audio feedback  
+- **Volume Control** - Separate music and effects volume sliders
+- **Dynamic Audio** - Context-aware music and sound triggering
+
+### Audio Assets
+- Menu background music
+- Menu navigation sounds (move, select, back)
+- Game sound effects (fruit eating)
+
+## Game Configuration
+
+All game settings are centralized in `src/constants/gameConfig.lua`:
+
+### Configuration Categories
+- **Screen/Scaling** - Virtual canvas and window settings
+- **Snake Game** - Grid size, speed, difficulty progression
+- **Input** - Timing and threshold settings
+- **Audio** - File paths and audio configuration
+- **Fonts** - Font definitions and sizing
+- **UI** - Interface layout and behavior settings
+
 ## Extending the Game
 
-To build upon this template:
-1. Modify `playState.lua` to implement your actual game logic
-2. Add more states as needed in the `src/states/` directory
-3. Create game entities in the `src/entities/` directory
-4. Implement game systems (physics, audio managers, etc.) in the `src/systems/` directory
-5. Define game constants and configuration in the `src/constants/` directory
-6. Expand the settings with additional options
-7. Add game assets (sprites, sounds, music) to their respective folders in the `assets/` directory
+This is now a complete Snake game rather than just a template. To build upon it:
+
+### Game Enhancements
+1. **Add more game modes** - Time attack, multiplayer, obstacles
+2. **Power-ups** - Special fruits with different effects
+3. **Levels/Maps** - Different arena layouts and challenges
+4. **Visual effects** - Particles, animations, screen shake
+5. **Advanced scoring** - Combo systems, high score tables
+
+### Framework Extensions  
+1. **Add more states** - Pause menu, high scores, credits
+2. **Create game entities** - Use `src/entities/` for game objects
+3. **Implement game systems** - Use `src/systems/` for physics, particles, etc.
+4. **Expand UI components** - Add more reusable interface elements
+5. **Add more assets** - Sprites, sounds, music, shaders
+6. **Enhance settings** - More graphics options, accessibility features
+
+### Technical Improvements
+1. **Save system** - Game progress, high scores, achievements
+2. **Networking** - Multiplayer support, leaderboards  
+3. **Performance** - Optimize rendering, add object pooling
+4. **Platform support** - Mobile controls, different screen sizes
+5. **Modding support** - External content loading, scripting

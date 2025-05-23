@@ -61,6 +61,8 @@ Each language is identified by a language code:
 ## Adding New Languages
 
 To add a new language:
-1. Add a new language section in `src/states/gameState.lua` with translations for all UI strings
+1. Add a new language section in `src/states/gameState.lua` with translations for all UI strings in `src/utils/localization.lua`
+   - Use the existing languages as a reference
+   - Ensure all keys are translated
 2. Add the language to the dropdown in `src/states/settingsState.lua`
 3. Make sure you have fonts that support the characters for the new language
