@@ -1,7 +1,6 @@
 -- Input manager to handle keyboard and gamepad input
 local love = require("love")
 local gameState = require "src.states.gameState"
-local soundManager = require "src.utils.soundManager"
 local gameConfig = require("src.constants.gameConfig")
 
 local inputManager = {}

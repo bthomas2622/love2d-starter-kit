@@ -43,7 +43,6 @@ This guide provides best practices for working with this Love2D Starter Kit game
         *   `soundManager.lua` - Audio playback and management
         *   `inputManager.lua` - Input handling (keyboard/gamepad)
         *   `localization.lua` - Multi-language system (13 languages)
-        *   `updateGameSettings.lua` - Settings persistence
         *   `json.lua` - JSON parsing utilities
     *   `src/ui/`: UI components
         *   `button.lua` - Interactive button component

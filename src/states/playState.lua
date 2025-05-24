@@ -1,11 +1,11 @@
 -- Snake Game Play State
 local love = require("love")
 local gameConfig = require("src.constants.gameConfig")
-local Button = require "src.ui.button"
-local gameState = require "src.states.gameState"
 local fontManager = require "src.utils.fontManager"
 local soundManager = require "src.utils.soundManager"
 local inputManager = require "src.utils.inputManager"
+local Snake = require "src.entities.snake"
+local Fruit = require "src.entities.fruit"
 
 local playState = {}
 
@@ -22,14 +22,8 @@ local INITIAL_LENGTH = gameConfig.SNAKE.INITIAL_LENGTH
 local buttons = {}
 local scoreFont = nil
 local messageFont = nil
-local snakeHead = nil
-local snakeBody = nil
-local snakeTail = nil
-local fruitImg = nil
-local snake = {}
-local fruit = {x = 1, y = 1} -- Initialize with a default value
-local direction = "right"
-local nextDirection = "right"
+local snake = nil
+local fruit = nil
 local timer = 0
 local score = 0
 local gameOver = false
@@ -37,161 +31,31 @@ local paused = false
 local gameSpeed = BASE_GAME_SPEED -- Current game speed (gets faster as score increases)
 
 -- Store current transform for consistent UI layout
-local currentScale = 1
-local currentOffsetX = 0
-local currentOffsetY = 0
 local baseScreenWidth = gameConfig.VIRTUAL_WIDTH
 local baseScreenHeight = gameConfig.VIRTUAL_HEIGHT
 
--- Forward declarations
-local spawnFruit
+-- Forward declarations (not needed anymore with entities)
 
 -- Initialize the game elements
 local function initGame()
     -- Reset game state
-    snake = {}
-    direction = "right"
-    nextDirection = "right"
     timer = 0
     score = 0
     gameOver = false
     paused = false
     gameSpeed = BASE_GAME_SPEED -- Reset game speed to base value
     
-    -- Create the snake with initial length
-    local startX = math.floor(GRID_WIDTH / 4)
-    local startY = math.floor(GRID_HEIGHT / 2)
+    -- Create new snake entity
+    snake = Snake.new(GRID_WIDTH, GRID_HEIGHT, GRID_SIZE, INITIAL_LENGTH)
     
-    -- Create head
-    snake[1] = {x = startX, y = startY, type = "head"}
-    
-    -- Create initial body segments
-    for i = 1, INITIAL_LENGTH do
-        snake[i+1] = {x = startX - i, y = startY, type = "body"}
-    end
-    
-    -- Set the last segment as tail
-    if #snake > 1 then
-        snake[#snake].type = "tail"
-    end
+    -- Create new fruit entity
+    fruit = Fruit.new(GRID_WIDTH, GRID_HEIGHT, GRID_SIZE)
     
     -- Spawn first fruit
-    spawnFruit()
-end
-
--- Spawn a fruit at a random location (not on the snake)
-spawnFruit = function()
-    local valid = false
-    local newX, newY
-    
-    while not valid do
-        -- Make sure we're using the current grid dimensions
-        newX = love.math.random(1, GRID_WIDTH)
-        newY = love.math.random(1, GRID_HEIGHT)
-        
-        -- Check if position collides with snake
-        valid = true
-        for _, segment in ipairs(snake) do
-            if segment.x == newX and segment.y == newY then
-                valid = false
-                break
-            end
-        end
-    end
-    
-    fruit = {x = newX, y = newY}
-end
-
--- Update snake segment types (head, body, tail)
-local function updateSnakeSegmentTypes()
-    if #snake == 0 then return end
-    
-    -- First segment is always the head
-    snake[1].type = "head"
-    
-    -- Middle segments are body
-    for i = 2, #snake - 1 do
-        if snake[i] then
-            snake[i].type = "body"
-        end
-    end
-    
-    -- Last segment is always the tail
-    if #snake > 1 then
-        snake[#snake].type = "tail"
-    end
-end
-
--- Calculate rotation angle for a snake segment based on direction
-local function getSegmentRotation(segment, prevSegment, nextSegment)
-    if not segment then return 0 end
-    if segment.type == "head" then
-        -- Head rotation based on movement direction
-        if direction == "up" then return 0            -- Head points up
-        elseif direction == "down" then return math.pi            -- Head points down
-        elseif direction == "left" then return -math.pi/2    -- Head points left
-        else return math.pi/2                              -- Head points right
-        end
-    elseif segment.type == "tail" then
-        -- Tail rotation based on the direction to the previous segment
-        if nextSegment then
-            if segment.y > nextSegment.y then return 0       -- Prev is above
-            elseif segment.y < nextSegment.y then return math.pi -- Prev is below
-            elseif segment.x > nextSegment.x then return -math.pi/2 -- Prev is to the left
-            else return math.pi/2 -- Prev is to the right
-            end
-        end
-        return 0
-    else
-        -- For body segments, calculate rotation based on both prev and next segments
-        if prevSegment and nextSegment then
-            -- Check for turns (when direction changes)
-            
-            -- Vertical to horizontal transitions
-            if prevSegment.x == segment.x and segment.y == nextSegment.y then
-                -- From up to right
-                if prevSegment.y > segment.y and segment.x < nextSegment.x then
-                    return -math.pi/2 -- Was 0
-                -- From up to left
-                elseif prevSegment.y > segment.y and segment.x > nextSegment.x then
-                    return -math.pi -- Was -math.pi/2
-                -- From down to right
-                elseif prevSegment.y < segment.y and segment.x < nextSegment.x then
-                    return 0 -- Was math.pi/2
-                -- From down to left
-                elseif prevSegment.y < segment.y and segment.x > nextSegment.x then
-                    return math.pi/2 -- Was math.pi
-                end
-            -- Horizontal to vertical transitions
-            elseif prevSegment.y == segment.y and segment.x == nextSegment.x then
-                -- From right to down
-                if prevSegment.x < segment.x and segment.y < nextSegment.y then
-                    return -math.pi/2 -- Was 0
-                -- From right to up
-                elseif prevSegment.x < segment.x and segment.y > nextSegment.y then
-                    return 0 -- Was math.pi/2
-                -- From left to down
-                elseif prevSegment.x > segment.x and segment.y < nextSegment.y then
-                    return -math.pi -- Was -math.pi/2
-                -- From left to up
-                elseif prevSegment.x > segment.x and segment.y > nextSegment.y then
-                    return math.pi/2 -- Was math.pi
-                end
-            end
-            
-            -- Check if part of a straight section
-            if prevSegment.x == nextSegment.x then
-                return 0  -- Vertical segment (was math.pi/2)
-            end
-        end
-        return -math.pi/2  -- Default horizontal orientation (was 0)
-    end
+    fruit:spawn(snake)
 end
 
 local function recalculateLayout(w, h, scale, offsetX, offsetY)
-    currentScale = scale
-    currentOffsetX = offsetX
-    currentOffsetY = offsetY
     
     -- Get the virtual canvas size properly
     local _, _, _, vWidth, vHeight = love.getScreenTransform()
@@ -208,8 +72,7 @@ local function recalculateLayout(w, h, scale, offsetX, offsetY)
     end
 
     buttons = {} -- Initialize empty buttons table but don't add the back button
-    
-    -- Load game assets with error handling
+      -- Load game assets with error handling
     local function safeLoadImage(path)
         if love.filesystem.getInfo(path) then
             return love.graphics.newImage(path)
@@ -220,13 +83,28 @@ local function recalculateLayout(w, h, scale, offsetX, offsetY)
     end
     
     -- Load the snake and fruit images
-    snakeHead = safeLoadImage("assets/images/snakeHead.png")
-    snakeBody = safeLoadImage("assets/images/snakeBody.png")
-    snakeTail = safeLoadImage("assets/images/snakeTail.png")
-    fruitImg = safeLoadImage("assets/images/fruit.png")
+    local snakeHeadImg = safeLoadImage("assets/images/snakeHead.png")
+    local snakeBodyImg = safeLoadImage("assets/images/snakeBody.png")
+    local snakeTailImg = safeLoadImage("assets/images/snakeTail.png")
+    local fruitImg = safeLoadImage("assets/images/fruit.png")
+      -- Set images for existing entities if they exist
+    if snake then
+        snake:setImages(snakeHeadImg, snakeBodyImg, snakeTailImg)
+    end
+    if fruit then
+        fruit:setImage(fruitImg)
+    end
     
     -- Initialize the game
     initGame()
+    
+    -- Set images for newly created entities
+    if snake then
+        snake:setImages(snakeHeadImg, snakeBodyImg, snakeTailImg)
+    end
+    if fruit then
+        fruit:setImage(fruitImg)
+    end
 end
 
 function playState.init(w, h, scale, offsetX, offsetY)
@@ -261,89 +139,68 @@ function playState.update(dt, scale)
     
     if gameOver or paused then
         return
-    end
-    
-    -- Handle continuous input for more responsive controls
+    end    -- Handle continuous input for more responsive controls
     -- Only process input when not in the process of moving the snake
     if timer < gameSpeed * 0.5 then -- Only accept new direction during first half of movement cycle
         -- Check for direction input using inputManager's isActionJustPressed function
-        if inputManager and inputManager.isActionJustPressed then
-            if inputManager.isActionJustPressed("up") and direction ~= "down" then
-                nextDirection = "up"
-            elseif inputManager.isActionJustPressed("down") and direction ~= "up" then
-                nextDirection = "down"
-            elseif inputManager.isActionJustPressed("left") and direction ~= "right" then
-                nextDirection = "left"
-            elseif inputManager.isActionJustPressed("right") and direction ~= "left" then
-                nextDirection = "right"
+        if inputManager and inputManager.isActionJustPressed and snake then
+            local currentDirection = snake.direction
+            if inputManager.isActionJustPressed("up") and currentDirection ~= "down" then
+                snake:setDirection("up")
+            elseif inputManager.isActionJustPressed("down") and currentDirection ~= "up" then
+                snake:setDirection("down")
+            elseif inputManager.isActionJustPressed("left") and currentDirection ~= "right" then
+                snake:setDirection("left")
+            elseif inputManager.isActionJustPressed("right") and currentDirection ~= "left" then
+                snake:setDirection("right")
             end
         end
     end
     
     -- Update the game timer
     timer = timer + dt
-    
-    -- Move the snake at regular intervals
+      -- Move the snake at regular intervals
     if timer >= gameSpeed then
         timer = 0
         
-        -- Update direction based on nextDirection
-        direction = nextDirection
-        
-        -- Check if snake has a head
-        if #snake < 1 then
-            return
-        end
-        
-        -- Calculate new head position
-        local newHead = {x = snake[1].x, y = snake[1].y, type = "head"}
-        
-        if direction == "up" then
-            newHead.y = newHead.y - 1
-        elseif direction == "down" then
-            newHead.y = newHead.y + 1
-        elseif direction == "left" then
-            newHead.x = newHead.x - 1
-        elseif direction == "right" then
-            newHead.x = newHead.x + 1
-        end
-        
-        -- Check for collision with walls
-        if newHead.x < 1 or newHead.x > GRID_WIDTH or newHead.y < 1 or newHead.y > GRID_HEIGHT then
-            gameOver = true
-            return
-        end
-        
-        -- Check for collision with self
-        for i = 1, #snake - 1 do
-            if snake[i] and newHead.x == snake[i].x and newHead.y == snake[i].y then
+        -- Move the snake and check for collisions
+        if snake then
+            local newHead = snake:move()
+            
+            if not newHead then
+                -- Snake collided with wall or itself
                 gameOver = true
                 return
             end
-        end
-        
-        -- Insert new head at beginning
-        table.insert(snake, 1, newHead)        -- Check for fruit collision
-        if fruit and newHead.x == fruit.x and newHead.y == fruit.y then
-            -- Increase score
-            score = score + 1
-            -- Play fruit eating sound effect
-            soundManager.playSound("fruitEat")
             
-            -- Increase game speed (make the game faster as the player scores more points)
-            gameSpeed = math.max(MIN_SPEED, gameSpeed - SPEED_INCREASE)
-            
-            -- Spawn new fruit
-            if spawnFruit then
-                spawnFruit()
+            -- Check for fruit collision
+            local headX, headY = snake:getHeadPosition()
+            if fruit then
+                local fruitX, fruitY = fruit:getPosition()
+                
+                if headX == fruitX and headY == fruitY then
+                    -- Increase score
+                    score = score + 1
+                    -- Play fruit eating sound effect
+                    soundManager.playSound("fruitEat")
+                    
+                    -- Increase game speed (make the game faster as the player scores more points)
+                    gameSpeed = math.max(MIN_SPEED, gameSpeed - SPEED_INCREASE)
+                    
+                    -- Grow the snake (don't remove tail)
+                    snake:grow()
+                    
+                    -- Spawn new fruit
+                    fruit:spawn(snake)
+                else
+                    -- If no fruit eaten, remove the tail
+                    snake:removeTail()
+                end
+            else
+                -- If no fruit exists, just remove the tail
+                snake:removeTail()
             end
-        else
-            -- If no fruit eaten, remove the tail
-            table.remove(snake)
         end
-        
-        -- Update segment types after any changes to the snake
-        updateSnakeSegmentTypes()
     end
 end
 
@@ -372,59 +229,14 @@ function playState.draw()
     for y = 0, GRID_HEIGHT do
         love.graphics.line(0, y * GRID_SIZE, GRID_WIDTH * GRID_SIZE, y * GRID_SIZE)
     end
-    
-    -- Draw fruit
-    if fruitImg and fruit then
-        love.graphics.setColor(1, 1, 1, 1)
-        local fruitWidth = fruitImg:getWidth() or 1
-        local fruitHeight = fruitImg:getHeight() or 1
-        
-        -- Scale fruit image 2x larger
-        love.graphics.draw(
-            fruitImg, 
-            (fruit.x - 0.5) * GRID_SIZE, 
-            (fruit.y - 0.5) * GRID_SIZE, 
-            0, 
-            GRID_SIZE / fruitWidth, 
-            GRID_SIZE / fruitHeight
-        )
+      -- Draw fruit
+    if fruit then
+        fruit:draw()
     end
     
     -- Draw snake
     if snake then
-        love.graphics.setColor(1, 1, 1, 1)
-        for i, segment in ipairs(snake) do
-            local img = nil
-            
-            if segment.type == "head" and snakeHead then
-                img = snakeHead
-            elseif segment.type == "tail" and snakeTail then
-                img = snakeTail
-            elseif snakeBody then
-                img = snakeBody
-            end
-            
-            if img then
-                local prevSeg = snake[i + 1]
-                local nextSeg = snake[i - 1]
-                local rotation = getSegmentRotation(segment, prevSeg, nextSeg)
-                
-                local imgWidth = img:getWidth() or 1
-                local imgHeight = img:getHeight() or 1
-                
-                -- Draw snake segment with proper rotation and 2x scale
-                love.graphics.draw(
-                    img, 
-                    (segment.x - 0.5) * GRID_SIZE + GRID_SIZE/2, 
-                    (segment.y - 0.5) * GRID_SIZE + GRID_SIZE/2, 
-                    rotation,
-                    GRID_SIZE / imgWidth, 
-                    GRID_SIZE / imgHeight,
-                    imgWidth / 2,
-                    imgHeight / 2
-                )
-            end
-        end
+        snake:draw()
     end
     
     -- Draw score and speed
@@ -576,17 +388,18 @@ local function handleInput(inputType, inputValue)
     
     if paused then
         return
-    end
-    
-    -- Direction controls (prevent 180-degree turns)
-    if actionTriggered == "up" and direction ~= "down" then
-        nextDirection = "up"
-    elseif actionTriggered == "down" and direction ~= "up" then
-        nextDirection = "down"
-    elseif actionTriggered == "left" and direction ~= "right" then
-        nextDirection = "left"
-    elseif actionTriggered == "right" and direction ~= "left" then
-        nextDirection = "right"
+    end    -- Direction controls (prevent 180-degree turns)
+    if snake then
+        local currentDirection = snake.direction
+        if actionTriggered == "up" and currentDirection ~= "down" then
+            snake:setDirection("up")
+        elseif actionTriggered == "down" and currentDirection ~= "up" then
+            snake:setDirection("down")
+        elseif actionTriggered == "left" and currentDirection ~= "right" then
+            snake:setDirection("left")
+        elseif actionTriggered == "right" and currentDirection ~= "left" then
+            snake:setDirection("right")
+        end
     end
 end
 

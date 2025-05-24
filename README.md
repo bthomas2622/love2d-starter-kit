@@ -59,7 +59,6 @@ This is a fully functional Love2D Starter Kit with a complete menu system and ga
     - `localization.lua` - Multi-language localization system
     - `soundManager.lua` - Audio management and playback
     - `inputManager.lua` - Input handling (keyboard/gamepad)
-    - `updateGameSettings.lua` - Utility for updating game settings
     - `json.lua` - JSON parsing utilities
   - `entities/` - Game entities and objects (available for expansion)
   - `systems/` - Game systems like physics, audio, etc. (available for expansion)
