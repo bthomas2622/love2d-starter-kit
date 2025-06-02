@@ -44,14 +44,26 @@ jobs:
     
     - name: Setup Butler (itch.io CLI)
       run: |
-        # Download and install Butler
+        # Download Butler
         curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-        unzip butler.zip
+    
+        # Verify the download
+        if [ ! -s butler.zip ]; then
+          echo "Error: butler.zip file is empty or missing."
+          exit 1
+        fi
+    
+        # Unzip the downloaded file
+        unzip butler.zip || { echo "Failed to unzip butler.zip"; exit 1; }
+    
+        # Make the binary executable
         chmod +x butler
+    
+        # Move the binary to a directory in PATH
         sudo mv butler /usr/local/bin/
-        
-        # Verify installation
-        butler -V
+    
+        # Verify the installation
+        butler -V || { echo "Butler installation failed."; exit 1; }
     
     - name: Login to Butler
       env:
