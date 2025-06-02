@@ -1,0 +1,224 @@
+name: Deploy to Itch.io
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Create .love file
+      run: |
+        # Create build directory
+        mkdir -p build
+        
+        # Copy all game files to a temporary directory
+        mkdir -p temp-game
+        cp -r * temp-game/ 2>/dev/null || true
+        
+        # Remove non-game files from the temp directory
+        rm -rf temp-game/.git
+        rm -rf temp-game/.github
+        rm -rf temp-game/build
+        rm -f temp-game/README.md
+        rm -f temp-game/INSTALL.md
+        rm -f temp-game/FONT_SUPPORT.md
+        rm -f temp-game/.gitignore
+        
+        # Create the .love file (which is just a zip with .love extension)
+        cd temp-game
+        zip -r ../build/game.love *
+        cd ..
+        
+        # Clean up temp directory
+        rm -rf temp-game
+        
+        # Verify the .love file was created
+        ls -la build/
+    
+    - name: Setup Butler (itch.io CLI)
+      run: |
+        # Download and install Butler
+        curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+        unzip butler.zip
+        chmod +x butler
+        sudo mv butler /usr/local/bin/
+        
+        # Verify installation
+        butler -V
+    
+    - name: Login to Butler
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      run: |
+        butler login
+    
+    - name: Deploy Love2D file to Itch.io
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      run: |
+        # Deploy the .love file to itch.io
+        butler push build/game.love ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:love2d --userversion-file <(echo $GITHUB_RUN_NUMBER)
+    
+    - name: Create Windows executable
+      run: |
+        # Download Love2D for Windows
+        wget https://github.com/love2d/love/releases/download/11.4/love-11.4-win64.zip
+        unzip love-11.4-win64.zip
+        
+        # Create Windows executable
+        mkdir -p build/windows
+        cp -r love-11.4-win64/* build/windows/
+        cat build/windows/love.exe build/game.love > build/windows/game.exe
+        rm build/windows/love.exe
+        
+        # List the Windows build contents
+        ls -la build/windows/
+    
+    - name: Deploy Windows build to Itch.io
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      run: |
+        butler push build/windows ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:windows --userversion-file <(echo $GITHUB_RUN_NUMBER)
+    
+    - name: Create HTML5/Web build
+      run: |
+        # Download love.js for HTML5 builds
+        wget https://github.com/Davidobot/love.js/releases/download/v11.4/love.js-11.4.zip
+        unzip love.js-11.4.zip -d love.js
+        
+        # Create HTML5 build directory
+        mkdir -p build/html5
+        
+        # Copy love.js files
+        cp -r love.js/* build/html5/
+        
+        # Copy our game.love file and rename it to game.js
+        cp build/game.love build/html5/game.js
+        
+        # Create a custom index.html with proper title and metadata
+        cat > build/html5/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Love2D Snake Game</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #222;
+                    color: white;
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                }
+                canvas {
+                    display: block;
+                    margin: 20px auto;
+                    border: 2px solid #444;
+                }
+                #loading {
+                    margin: 20px;
+                    font-size: 18px;
+                }
+                .controls {
+                    margin: 20px;
+                    max-width: 600px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    text-align: left;
+                }
+                .controls h3 {
+                    text-align: center;
+                    color: #ccc;
+                }
+                .controls p {
+                    margin: 10px 0;
+                    color: #aaa;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Love2D Snake Game</h1>
+            <div id="loading">Loading game...</div>
+            <canvas id="canvas" width="1280" height="720"></canvas>
+            
+            <div class="controls">
+                <h3>Controls</h3>
+                <p><strong>Arrow Keys</strong> - Move snake / Navigate menus</p>
+                <p><strong>Enter</strong> - Select menu option</p>
+                <p><strong>Escape</strong> - Back / Pause</p>
+                <p><strong>Mouse</strong> - Click buttons and interact with UI</p>
+            </div>
+            
+            <script>
+                window.addEventListener('load', function() {
+                    var Module = {
+                        canvas: document.getElementById('canvas'),
+                        print: function(text) {
+                            console.log(text);
+                        },
+                        printErr: function(text) {
+                            console.error(text);
+                        },
+                        onRuntimeInitialized: function() {
+                            document.getElementById('loading').style.display = 'none';
+                        }
+                    };
+                    
+                    // Load the love.js engine
+                    var script = document.createElement('script');
+                    script.src = 'love.js';
+                    script.onload = function() {
+                        // Game should start automatically
+                    };
+                    document.head.appendChild(script);
+                });
+            </script>
+        </body>
+        </html>
+        EOF
+        
+        # List the HTML5 build contents
+        ls -la build/html5/
+    
+    - name: Deploy HTML5 build to Itch.io
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      run: |
+        butler push build/html5 ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:html5 --userversion-file <(echo $GITHUB_RUN_NUMBER)
+    
+    - name: Create Linux executable
+      run: |
+        # Download Love2D for Linux
+        wget https://github.com/love2d/love/releases/download/11.4/love-11.4-x86_64.AppImage
+        chmod +x love-11.4-x86_64.AppImage
+        
+        # Create Linux distribution
+        mkdir -p build/linux
+        cp love-11.4-x86_64.AppImage build/linux/
+        cp build/game.love build/linux/
+        
+        # Create a simple run script
+        cat > build/linux/run-game.sh << 'EOF'
+        #!/bin/bash
+        cd "$(dirname "$0")"
+        ./love-11.4-x86_64.AppImage game.love
+        EOF
+        chmod +x build/linux/run-game.sh
+        
+        # List the Linux build contents
+        ls -la build/linux/
+    
+    - name: Deploy Linux build to Itch.io
+      env:
+        BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      run: |
+        butler push build/linux ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:linux --userversion-file <(echo $GITHUB_RUN_NUMBER)
