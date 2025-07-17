@@ -50,7 +50,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y imagemagick && \
           sudo apt-get install -y unzip && \
           sudo apt-get install -y curl && \
-          sudo apt-get install -y rsync
+          sudo apt-get install -y rsync && \
+          sudo apt-get install -y p7zip-full
         
       - name: Build HTML package
         run: |
