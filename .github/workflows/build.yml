@@ -57,13 +57,15 @@ jobs:
           curl -fsSL --retry 5 --retry-delay 15 --connect-timeout 30 --max-time 300 https://github.com/2dengine/love.js/archive/refs/heads/main.zip -o ./tools/love.js.zip || exit 1
           unzip -q ./tools/love.js.zip -d ./tools/
           
-          # Create a custom index.html for itch.io compatibility (dynamic loading approach)
+          # Create a custom index.html for itch.io compatibility with improved error handling
           cat > ./tools/love.js-main/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
           <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
+              <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+              <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
               <title>${{ env.PRODUCT_NAME }}</title>
               <style>
                   body { 
@@ -84,6 +86,17 @@ jobs:
                   #loading {
                       color: white;
                       text-align: center;
+                      padding: 20px;
+                  }
+                  #error {
+                      color: #ff6b6b;
+                      text-align: center;
+                      padding: 20px;
+                      background: rgba(255, 107, 107, 0.1);
+                      border: 1px solid #ff6b6b;
+                      border-radius: 5px;
+                      margin: 20px;
+                      max-width: 600px;
                   }
               </style>
           </head>
@@ -91,19 +104,149 @@ jobs:
               <div id="loading">Loading game...</div>
               <script>
                   window.addEventListener('DOMContentLoaded', function() {
-                      document.getElementById('loading').style.display = 'none';
+                      var loadingDiv = document.getElementById('loading');
+                      loadingDiv.style.display = 'none';
+                      
                       var script = document.createElement('script');
                       script.src = 'player.js?g=game.love&n=1';
+                      
                       script.onerror = function() {
-                          document.getElementById('loading').innerHTML = 'Error loading game. Please check console for details.';
-                          document.getElementById('loading').style.display = 'block';
+                          loadingDiv.innerHTML = '<div id="error">Error loading game. Please check console for details.<br><br>If you\'re seeing this on itch.io, the game may be loading in compatibility mode.</div>';
+                          loadingDiv.style.display = 'block';
                       };
+                      
+                      script.onload = function() {
+                          console.log('Player script loaded successfully');
+                      };
+                      
+                      document.body.appendChild(script);
+                  });
+                  
+                  // Additional error handling for SharedArrayBuffer issues
+                  window.addEventListener('error', function(e) {
+                      if (e.message && e.message.includes('SharedArrayBuffer')) {
+                          console.log('SharedArrayBuffer error detected, this is normal on static hosts like itch.io');
+                      }
+                  });
+              </script>
+          </body>
+          </html>
+          EOF
+          
+          # Create a compatibility mode version for itch.io
+          cat > ./tools/love.js-main/index-compat.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>${{ env.PRODUCT_NAME }} (Compatibility Mode)</title>
+              <style>
+                  body { 
+                      margin: 0; 
+                      padding: 0; 
+                      background: #000; 
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      min-height: 100vh;
+                      font-family: Arial, sans-serif;
+                  }
+                  canvas { 
+                      display: block; 
+                      max-width: 100%;
+                      max-height: 100%;
+                  }
+                  #loading {
+                      color: white;
+                      text-align: center;
+                      padding: 20px;
+                  }
+                  #error {
+                      color: #ff6b6b;
+                      text-align: center;
+                      padding: 20px;
+                      background: rgba(255, 107, 107, 0.1);
+                      border: 1px solid #ff6b6b;
+                      border-radius: 5px;
+                      margin: 20px;
+                      max-width: 600px;
+                  }
+              </style>
+          </head>
+          <body>
+              <div id="loading">Loading game in compatibility mode...</div>
+              <script>
+                  window.addEventListener('DOMContentLoaded', function() {
+                      var loadingDiv = document.getElementById('loading');
+                      loadingDiv.style.display = 'none';
+                      
+                      var script = document.createElement('script');
+                      // Force compatibility mode by adding c=1 parameter
+                      script.src = 'player.js?g=game.love&c=1&n=1';
+                      
+                      script.onerror = function() {
+                          loadingDiv.innerHTML = '<div id="error">Error loading game in compatibility mode. Please check console for details.</div>';
+                          loadingDiv.style.display = 'block';
+                      };
+                      
+                      script.onload = function() {
+                          console.log('Player script loaded in compatibility mode');
+                      };
+                      
                       document.body.appendChild(script);
                   });
               </script>
           </body>
           </html>
           EOF
+          
+          # Create enhanced .htaccess file for better server compatibility
+          cat > ./tools/love.js-main/.htaccess << 'EOF'
+          # Headers for SharedArrayBuffer support (if server supports it)
+          <IfModule mod_headers.c>
+              Header always set Cross-Origin-Opener-Policy "same-origin"
+              Header always set Cross-Origin-Embedder-Policy "require-corp"
+          </IfModule>
+          
+          # MIME types for LOVE2D files
+          <IfModule mod_mime.c>
+              AddType application/octet-stream .love
+              AddType application/wasm .wasm
+              AddType audio/ogg .ogg
+          </IfModule>
+          
+          # Compression for better loading times
+          <IfModule mod_deflate.c>
+              AddOutputFilterByType DEFLATE text/html text/css application/javascript application/wasm
+          </IfModule>
+          
+          # Cache control for game assets
+          <IfModule mod_expires.c>
+              ExpiresActive on
+              ExpiresByType application/javascript "access plus 1 month"
+              ExpiresByType application/wasm "access plus 1 month"
+              ExpiresByType application/octet-stream "access plus 1 month"
+              ExpiresByType audio/ogg "access plus 1 month"
+          </IfModule>
+          EOF
+          
+          # Modify player.js for better itch.io compatibility
+          # Replace the SharedArrayBuffer error with fallback to compatibility mode
+          if [ -f ./tools/love.js-main/player.js ]; then
+            sed -i 's/throw new Error.*Cross-Origin Policy.*configured properly.*;//g' ./tools/love.js-main/player.js
+            sed -i 's/return;//g' ./tools/love.js-main/player.js
+            
+            # Add fallback logic before the runLove() call
+            sed -i '/if (!window\.SharedArrayBuffer) {/,/}/ {
+              /if (!window\.SharedArrayBuffer) {/a\
+                console.warn('\''SharedArrayBuffer not available, falling back to compatibility mode'\'');\
+                // Force compatibility mode when SharedArrayBuffer is not available\
+                ops.compat = true;
+              /throw new Error/d
+              /return;/d
+            }' ./tools/love.js-main/player.js
+          fi
           
           # Generate favicon if icon exists, otherwise use a default from existing assets
           if [ -f ./assets/icon.png ]; then
@@ -122,6 +265,45 @@ jobs:
           
           # Copy the game file
           cp -v ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}.love ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html/game.love
+          
+          # Create a README for deployment instructions
+          cat > ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html/README.md << 'EOF'
+          # HTML Build Deployment Guide
+          
+          This package contains the web version of your LÖVE2D game optimized for various hosting platforms.
+          
+          ## Files Included:
+          
+          - `index.html` - Main game page with automatic compatibility detection
+          - `index-compat.html` - Compatibility mode version (recommended for itch.io)
+          - `player.js` - Modified game loader with fallback support
+          - `game.love` - Your game package
+          - `.htaccess` - Server configuration (for Apache servers)
+          - Various LÖVE.js engine files in subdirectories
+          
+          ## Deployment Options:
+          
+          ### For itch.io:
+          1. Upload all files to itch.io
+          2. Set `index-compat.html` as your main file, OR
+          3. Use `index.html` which will automatically detect and use compatibility mode
+          
+          ### For other web hosts:
+          1. Upload all files to your web server
+          2. Use `index.html` as your main page
+          3. The `.htaccess` file will configure proper headers if your server supports it
+          
+          ### For local testing:
+          - Use a local web server (not file:// protocol)
+          - Python: `python -m http.server 8000`
+          - Node.js: Use the included server.js if available
+          
+          ## Troubleshooting:
+          
+          - **Black screen**: Try using `index-compat.html` instead
+          - **Loading errors**: Check browser console for details
+          - **Performance issues**: Ensure proper MIME types are configured on your server
+          EOF
           
           # Create zip for upload
           7z a -tzip \
