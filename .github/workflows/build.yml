@@ -71,7 +71,7 @@ jobs:
               </style>
           </head>
           <body>
-              <script src="player.min.js?g=game.love"></script>
+              <script src="player.js?g=game.love"></script>
           </body>
           </html>
           EOF
@@ -86,8 +86,8 @@ jobs:
           # Create output directory and copy files
           mkdir -p "${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html"
           
-          # Copy love.js files (excluding .htaccess which itch.io doesn't support)
-          rsync -a --exclude='.htaccess' --exclude='*.git*' --exclude='*.md' --exclude='*.txt' \
+          # Copy essential love.js files (keep .htaccess for CORS headers)
+          rsync -a --exclude='*.git*' --exclude='*.md' --exclude='*.txt' \
             ./tools/love.js-main/ \
             ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html/
           
