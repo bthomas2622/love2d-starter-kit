@@ -51,7 +51,6 @@ jobs:
           sudo apt-get install -y unzip && \
           sudo apt-get install -y curl && \
           sudo apt-get install -y rsync
-
         
       - name: Build HTML package
         run: |
@@ -60,7 +59,11 @@ jobs:
           sed -i "s/<title>löve.js<\/title>/<title>${{ env.PRODUCT_NAME }}<\/title>/" ./tools/love.js-main/index.html
           sed -i '/<base href="\/play\/">$/d' ./tools/love.js-main/index.html
           sed -i "s/player.min.js/player.min.js?g=game.love/" ./tools/love.js-main/index.html
-          convert ./assets/icon.png -define icon:auto-resize="256,128,96,64,48,32,24,16" ./tools/love.js-main/favicon.ico
+          if [ -f ./assets/icon.png ]; then
+            convert ./assets/icon.png -define icon:auto-resize="256,128,96,64,48,32,24,16" ./tools/love.js-main/favicon.ico
+          else
+            echo "Warning: ./assets/icon.png not found. Skipping favicon generation."
+          fi
           mkdir -p "${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html"
           rsync -a --exclude='.htaccess' --exclude='*.git*' --exclude='*.md' --exclude='*.txt' \
             ./tools/love.js-main/ \
