@@ -315,3 +315,32 @@ jobs:
         with:
           name: ${{ env.PRODUCT_FILE }}-html
           path: ${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_FILE }}-html
+
+      - name: Download butler
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        shell: bash
+        run: |
+          # Set butler platform based on runner OS
+          BUTLER_PLATFORM="linux-amd64"
+          BUTLER_EXEC="butler"
+          mkdir ./butler 2>/dev/null || true
+          pushd butler
+            curl -L -o ./butler.zip "https://broth.itch.ovh/butler/${BUTLER_PLATFORM}/LATEST/archive/default"
+            unzip butler.zip
+            chmod +x ./${BUTLER_EXEC}
+          popd
+          ./butler/${BUTLER_EXEC} -V
+      - name: Upload to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        shell: bash
+        run: |
+          BUTLER_EXEC="butler"
+          versionArgument=""
+          ./butler/${BUTLER_EXEC} push \
+            "${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_FILE }}.love" \
+            ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:love ${versionArgument}
+          ./butler/${BUTLER_EXEC} push \
+            "${{ env.OUTPUT_FOLDER }}/${{ env.PRODUCT_FILE }}-html" \
+            ${{ secrets.ITCH_USERNAME }}/${{ secrets.ITCH_GAME }}:html ${versionArgument}
