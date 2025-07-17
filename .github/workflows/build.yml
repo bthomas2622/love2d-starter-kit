@@ -57,7 +57,7 @@ jobs:
           curl -fsSL --retry 5 --retry-delay 15 --connect-timeout 30 --max-time 300 https://github.com/2dengine/love.js/archive/refs/heads/main.zip -o ./tools/love.js.zip || exit 1
           unzip -q ./tools/love.js.zip -d ./tools/
           
-          # Create a custom index.html for itch.io compatibility
+          # Create a custom index.html for itch.io compatibility (dynamic loading approach)
           cat > ./tools/love.js-main/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
@@ -66,12 +66,41 @@ jobs:
               <meta name="viewport" content="width=device-width, initial-scale=1">
               <title>${{ env.PRODUCT_NAME }}</title>
               <style>
-                  body { margin: 0; padding: 0; background: #000; }
-                  canvas { display: block; margin: 0 auto; }
+                  body { 
+                      margin: 0; 
+                      padding: 0; 
+                      background: #000; 
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      min-height: 100vh;
+                      font-family: Arial, sans-serif;
+                  }
+                  canvas { 
+                      display: block; 
+                      max-width: 100%;
+                      max-height: 100%;
+                  }
+                  #loading {
+                      color: white;
+                      text-align: center;
+                  }
               </style>
           </head>
           <body>
-              <script src="player.js?g=game.love"></script>
+              <div id="loading">Loading game...</div>
+              <script>
+                  window.addEventListener('DOMContentLoaded', function() {
+                      document.getElementById('loading').style.display = 'none';
+                      var script = document.createElement('script');
+                      script.src = 'player.js?g=game.love&n=1';
+                      script.onerror = function() {
+                          document.getElementById('loading').innerHTML = 'Error loading game. Please check console for details.';
+                          document.getElementById('loading').style.display = 'block';
+                      };
+                      document.body.appendChild(script);
+                  });
+              </script>
           </body>
           </html>
           EOF

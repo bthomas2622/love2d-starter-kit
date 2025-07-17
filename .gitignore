@@ -20,5 +20,6 @@ Thumbs.db
 # Build artifacts or temporary files
 dist/
 build/
+html-build/
 *.o
 *.obj
