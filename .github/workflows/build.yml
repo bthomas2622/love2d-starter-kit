@@ -56,19 +56,45 @@ jobs:
         run: |
           curl -fsSL --retry 5 --retry-delay 15 --connect-timeout 30 --max-time 300 https://github.com/2dengine/love.js/archive/refs/heads/main.zip -o ./tools/love.js.zip || exit 1
           unzip -q ./tools/love.js.zip -d ./tools/
-          sed -i "s/<title>löve.js<\/title>/<title>${{ env.PRODUCT_NAME }}<\/title>/" ./tools/love.js-main/index.html
-          sed -i '/<base href="\/play\/">$/d' ./tools/love.js-main/index.html
-          sed -i "s/player.min.js/player.min.js?g=game.love/" ./tools/love.js-main/index.html
+          
+          # Create a custom index.html for itch.io compatibility
+          cat > ./tools/love.js-main/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>${{ env.PRODUCT_NAME }}</title>
+              <style>
+                  body { margin: 0; padding: 0; background: #000; }
+                  canvas { display: block; margin: 0 auto; }
+              </style>
+          </head>
+          <body>
+              <script src="player.min.js?g=game.love"></script>
+          </body>
+          </html>
+          EOF
+          
+          # Generate favicon if icon exists, otherwise use a default from existing assets
           if [ -f ./assets/icon.png ]; then
             convert ./assets/icon.png -define icon:auto-resize="256,128,96,64,48,32,24,16" ./tools/love.js-main/favicon.ico
           else
-            echo "Warning: ./assets/icon.png not found. Skipping favicon generation."
+            echo "Warning: No icon found. Skipping favicon generation."
           fi
+          
+          # Create output directory and copy files
           mkdir -p "${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html"
+          
+          # Copy love.js files (excluding .htaccess which itch.io doesn't support)
           rsync -a --exclude='.htaccess' --exclude='*.git*' --exclude='*.md' --exclude='*.txt' \
             ./tools/love.js-main/ \
             ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html/
+          
+          # Copy the game file
           cp -v ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}.love ${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html/game.love
+          
+          # Create zip for upload
           7z a -tzip \
             "${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html.zip" \
             "${{ env.OUTPUT_FOLDER }}/${PRODUCT_FILE}-html"/*
